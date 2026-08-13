@@ -1,0 +1,371 @@
+import { Product, Category, SiteSettings } from '@/types';
+
+export const INITIAL_CATEGORIES: Category[] = [
+  {
+    id: 'cat-kurta-sets',
+    name: 'Kurta Sets',
+    slug: 'kurta-sets',
+    description: 'Exquisite handcrafted Kurta Sets crafted with royal silk, chiffon, and elaborate embroidery.',
+    image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=1200&auto=format&fit=crop',
+    isActive: true,
+    sortOrder: 1,
+  },
+  {
+    id: 'cat-kurtas',
+    name: 'Kurtas',
+    slug: 'kurtas',
+    description: 'Elegant standalone Kurtas designed with modern Indian silhouettes and delicate embellishments.',
+    image: 'https://images.unsplash.com/photo-1583391733956-6c78276477e2?q=80&w=1200&auto=format&fit=crop',
+    isActive: true,
+    sortOrder: 2,
+  },
+];
+
+export const INITIAL_PRODUCTS: Product[] = [
+  {
+    id: 'hnf-ks-001',
+    name: 'Gilded Zardosi Chanderi Kurta Set',
+    slug: 'gilded-zardosi-chanderi-kurta-set',
+    sku: 'HNF-KS-001',
+    categoryId: 'cat-kurta-sets',
+    categoryName: 'Kurta Sets',
+    description:
+      'Immerse yourself in regal magnificence with our Gilded Zardosi Silk Kurta Set. Woven from pure Chanderi silk with hand-embroidered metallic Zardosi detailing along the neckline and cuffs. Paired with wide-leg palazzo pants and a sheer organza scalloped dupatta.',
+    shortDescription: 'Chanderi Silk with Zardosi embroidery and organza dupatta.',
+    pricing: {
+      price: 4999,
+      compareAtPrice: 6499,
+      currency: 'INR',
+    },
+    variants: [
+      { sku: 'HNF-KS-001-S', size: 'S', color: 'Ivory Gold', stock: 8, price: 4999 },
+      { sku: 'HNF-KS-001-M', size: 'M', color: 'Ivory Gold', stock: 12, price: 4999 },
+      { sku: 'HNF-KS-001-L', size: 'L', color: 'Ivory Gold', stock: 6, price: 4999 },
+      { sku: 'HNF-KS-001-XL', size: 'XL', color: 'Ivory Gold', stock: 4, price: 4999 },
+      { sku: 'HNF-KS-001-XXL', size: 'XXL', color: 'Ivory Gold', stock: 2, price: 4999 },
+    ],
+    images: [
+      {
+        url: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=1000&auto=format&fit=crop',
+        altText: 'Gilded Zardosi Chanderi Kurta Set Front View',
+        sortOrder: 1,
+        isPrimary: true,
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1583391733956-6c78276477e2?q=80&w=1000&auto=format&fit=crop',
+        altText: 'Gilded Zardosi Chanderi Kurta Set Detail',
+        sortOrder: 2,
+        isPrimary: false,
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1563178406-4cdc2923acbc?q=80&w=1000&auto=format&fit=crop',
+        altText: 'Dupatta Scalloped Edge Close-up',
+        sortOrder: 3,
+        isPrimary: false,
+      },
+    ],
+    attributes: {
+      fabric: 'Chanderi Silk & Organza',
+      pattern: 'Zardosi Hand Embroidery',
+      occasion: 'Festive & Wedding Elegance',
+      sleeveType: '3/4 Sleeves with Scallop Finish',
+      fit: 'Relaxed Tailored Fit',
+      careInstructions: 'Dry Clean Only',
+    },
+    flags: {
+      isFeatured: true,
+      isNewArrival: true,
+      isBestSeller: true,
+      isActive: true,
+    },
+    seo: {
+      title: 'Gilded Zardosi Chanderi Kurta Set | House of NF',
+      description: 'Shop luxury Chanderi Silk Zardosi Kurta Set with organza dupatta from House of NF.',
+    },
+  },
+  {
+    id: 'hnf-ks-002',
+    name: 'Blush Rose Chikankari Kurta Set',
+    slug: 'blush-rose-chikankari-kurta-set',
+    sku: 'HNF-KS-002',
+    categoryId: 'cat-kurta-sets',
+    categoryName: 'Kurta Sets',
+    description:
+      'A masterpiece of Lucknowi craftsmanship, featuring intricate Bakhiya and Phanda stitches on featherlight Georgette. Accompanied by a matching tone-on-tone slip, straight cotton pants, and a hand-dyed chiffon dupatta with pearl tassels.',
+    shortDescription: 'Hand-crafted Georgette Chikankari Kurta Set in Pastel Rose.',
+    pricing: {
+      price: 3899,
+      compareAtPrice: 4800,
+      currency: 'INR',
+    },
+    variants: [
+      { sku: 'HNF-KS-002-S', size: 'S', color: 'Blush Rose', stock: 10, price: 3899 },
+      { sku: 'HNF-KS-002-M', size: 'M', color: 'Blush Rose', stock: 15, price: 3899 },
+      { sku: 'HNF-KS-002-L', size: 'L', color: 'Blush Rose', stock: 7, price: 3899 },
+      { sku: 'HNF-KS-002-XL', size: 'XL', color: 'Blush Rose', stock: 3, price: 3899 },
+      { sku: 'HNF-KS-002-XXL', size: 'XXL', color: 'Blush Rose', stock: 1, price: 3899 },
+    ],
+    images: [
+      {
+        url: 'https://images.unsplash.com/photo-1609357605129-26f69add5d6e?q=80&w=1000&auto=format&fit=crop',
+        altText: 'Blush Rose Chikankari Kurta Set',
+        sortOrder: 1,
+        isPrimary: true,
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=1000&auto=format&fit=crop',
+        altText: 'Chikankari Handwork Details',
+        sortOrder: 2,
+        isPrimary: false,
+      },
+    ],
+    attributes: {
+      fabric: 'Georgette & Chiffon',
+      pattern: 'Lucknowi Chikankari',
+      occasion: 'Day Soirée & Festive',
+      sleeveType: 'Full Sleeves',
+      fit: 'Straight Fit',
+      careInstructions: 'Gentle Handwash / Dry Clean',
+    },
+    flags: {
+      isFeatured: true,
+      isNewArrival: true,
+      isBestSeller: false,
+      isActive: true,
+    },
+    seo: {
+      title: 'Blush Rose Chikankari Kurta Set | House of NF',
+      description: 'Elegant Lucknowi Chikankari Kurta Set in blush rose.',
+    },
+  },
+  {
+    id: 'hnf-k-001',
+    name: 'Emerald Royal Silk Straight Kurta',
+    slug: 'emerald-royal-silk-straight-kurta',
+    sku: 'HNF-K-001',
+    categoryId: 'cat-kurtas',
+    categoryName: 'Kurtas',
+    description:
+      'Radiate timeless grace in this deep Emerald green raw silk straight kurta. Accented with subtle marodi embroidery along the high Mandarin collar and notched neckline.',
+    shortDescription: 'Raw Silk Straight Kurta with subtle gold thread collar.',
+    pricing: {
+      price: 2499,
+      compareAtPrice: 3200,
+      currency: 'INR',
+    },
+    variants: [
+      { sku: 'HNF-K-001-S', size: 'S', color: 'Emerald Green', stock: 12, price: 2499 },
+      { sku: 'HNF-K-001-M', size: 'M', color: 'Emerald Green', stock: 20, price: 2499 },
+      { sku: 'HNF-K-001-L', size: 'L', color: 'Emerald Green', stock: 14, price: 2499 },
+      { sku: 'HNF-K-001-XL', size: 'XL', color: 'Emerald Green', stock: 5, price: 2499 },
+      { sku: 'HNF-K-001-XXL', size: 'XXL', color: 'Emerald Green', stock: 2, price: 2499 },
+    ],
+    images: [
+      {
+        url: 'https://images.unsplash.com/photo-1583391733956-6c78276477e2?q=80&w=1000&auto=format&fit=crop',
+        altText: 'Emerald Royal Silk Straight Kurta',
+        sortOrder: 1,
+        isPrimary: true,
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=1000&auto=format&fit=crop',
+        altText: 'Neckline Close-up',
+        sortOrder: 2,
+        isPrimary: false,
+      },
+    ],
+    attributes: {
+      fabric: 'Raw Silk Blend',
+      pattern: 'Solid with Thread Work',
+      occasion: 'Casual Luxury & Office Chic',
+      sleeveType: '3/4 Sleeves',
+      fit: 'Tailored Straight Fit',
+      careInstructions: 'Dry Clean Only',
+    },
+    flags: {
+      isFeatured: true,
+      isNewArrival: false,
+      isBestSeller: true,
+      isActive: true,
+    },
+    seo: {
+      title: 'Emerald Royal Silk Straight Kurta | House of NF',
+      description: 'Raw silk straight kurta with elegant high collar detail.',
+    },
+  },
+  {
+    id: 'hnf-ks-003',
+    name: 'Maroon Velvet Heritage Anarkali Set',
+    slug: 'maroon-velvet-heritage-anarkali-set',
+    sku: 'HNF-KS-003',
+    categoryId: 'cat-kurta-sets',
+    categoryName: 'Kurta Sets',
+    description:
+      'A true heritage masterpiece. Rich Micro-velvet Anarkali flowing into 24 custom kalis, embellished with Dabka and Sequins. Paired with fitted churidar and heavy embroidered tissue dupatta.',
+    shortDescription: 'Plush Micro-Velvet Anarkali with gold sequins and Dabka work.',
+    pricing: {
+      price: 7999,
+      compareAtPrice: 9999,
+      currency: 'INR',
+    },
+    variants: [
+      { sku: 'HNF-KS-003-S', size: 'S', color: 'Deep Maroon', stock: 5, price: 7999 },
+      { sku: 'HNF-KS-003-M', size: 'M', color: 'Deep Maroon', stock: 8, price: 7999 },
+      { sku: 'HNF-KS-003-L', size: 'L', color: 'Deep Maroon', stock: 4, price: 7999 },
+      { sku: 'HNF-KS-003-XL', size: 'XL', color: 'Deep Maroon', stock: 2, price: 7999 },
+      { sku: 'HNF-KS-003-XXL', size: 'XXL', color: 'Deep Maroon', stock: 1, price: 7999 },
+    ],
+    images: [
+      {
+        url: 'https://images.unsplash.com/photo-1563178406-4cdc2923acbc?q=80&w=1000&auto=format&fit=crop',
+        altText: 'Maroon Velvet Heritage Anarkali Set',
+        sortOrder: 1,
+        isPrimary: true,
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=1000&auto=format&fit=crop',
+        altText: 'Dupatta Heavy Embroidery',
+        sortOrder: 2,
+        isPrimary: false,
+      },
+    ],
+    attributes: {
+      fabric: 'Micro-Velvet & Tissue',
+      pattern: 'Dabka & Sequin Handwork',
+      occasion: 'Royal Wedding & Festive',
+      sleeveType: 'Full Churidar Sleeves',
+      fit: 'Flared Anarkali',
+      careInstructions: 'Dry Clean Only',
+    },
+    flags: {
+      isFeatured: true,
+      isNewArrival: true,
+      isBestSeller: true,
+      isActive: true,
+    },
+    seo: {
+      title: 'Maroon Velvet Heritage Anarkali Set | House of NF',
+      description: 'Luxury Velvet Anarkali Kurta Set for festive celebrations.',
+    },
+  },
+  {
+    id: 'hnf-k-002',
+    name: 'Ivory Floral Hand-Block Printed Kurta',
+    slug: 'ivory-floral-hand-block-printed-kurta',
+    sku: 'HNF-K-002',
+    categoryId: 'cat-kurtas',
+    categoryName: 'Kurtas',
+    description:
+      'Breathable Malmal Cotton Kurta featuring traditional Sanganeri hand-block floral motifs in soft pastels. Finished with delicate gota patti borders along the hem and sleeve cuffs.',
+    shortDescription: 'Pure Cotton Sanganeri Hand-Block Printed Kurta.',
+    pricing: {
+      price: 1899,
+      compareAtPrice: 2499,
+      currency: 'INR',
+    },
+    variants: [
+      { sku: 'HNF-K-002-S', size: 'S', color: 'Ivory Pink', stock: 15, price: 1899 },
+      { sku: 'HNF-K-002-M', size: 'M', color: 'Ivory Pink', stock: 25, price: 1899 },
+      { sku: 'HNF-K-002-L', size: 'L', color: 'Ivory Pink', stock: 18, price: 1899 },
+      { sku: 'HNF-K-002-XL', size: 'XL', color: 'Ivory Pink', stock: 10, price: 1899 },
+      { sku: 'HNF-K-002-XXL', size: 'XXL', color: 'Ivory Pink', stock: 4, price: 1899 },
+    ],
+    images: [
+      {
+        url: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=1000&auto=format&fit=crop',
+        altText: 'Ivory Floral Hand-Block Printed Kurta',
+        sortOrder: 1,
+        isPrimary: true,
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1609357605129-26f69add5d6e?q=80&w=1000&auto=format&fit=crop',
+        altText: 'Hand Block Detail',
+        sortOrder: 2,
+        isPrimary: false,
+      },
+    ],
+    attributes: {
+      fabric: '100% Malmal Cotton',
+      pattern: 'Sanganeri Hand Block Print',
+      occasion: 'Summer Chic & Daily Luxury',
+      sleeveType: '3/4 Sleeves',
+      fit: 'A-Line Comfort',
+      careInstructions: 'Machine Wash Cold / Gentle',
+    },
+    flags: {
+      isFeatured: false,
+      isNewArrival: true,
+      isBestSeller: true,
+      isActive: true,
+    },
+    seo: {
+      title: 'Ivory Floral Hand-Block Printed Kurta | House of NF',
+      description: 'Sanganeri hand block cotton kurta for effortless luxury.',
+    },
+  },
+  {
+    id: 'hnf-k-003',
+    name: 'Sapphire Blue Mirror Work Straight Kurta',
+    slug: 'sapphire-blue-mirror-work-straight-kurta',
+    sku: 'HNF-K-003',
+    categoryId: 'cat-kurtas',
+    categoryName: 'Kurtas',
+    description:
+      'Luminous Sapphire Blue Cotton-Silk Kurta adorned with authentic Gujarati mirror work (Abhla Bharat) along the bodice. Designed to shine under evening lights.',
+    shortDescription: 'Cotton-Silk Blend Kurta with handcrafted mirror embroidery.',
+    pricing: {
+      price: 2799,
+      compareAtPrice: 3499,
+      currency: 'INR',
+    },
+    variants: [
+      { sku: 'HNF-K-003-S', size: 'S', color: 'Sapphire Blue', stock: 8, price: 2799 },
+      { sku: 'HNF-K-003-M', size: 'M', color: 'Sapphire Blue', stock: 12, price: 2799 },
+      { sku: 'HNF-K-003-L', size: 'L', color: 'Sapphire Blue', stock: 9, price: 2799 },
+      { sku: 'HNF-K-003-XL', size: 'XL', color: 'Sapphire Blue', stock: 5, price: 2799 },
+      { sku: 'HNF-K-003-XXL', size: 'XXL', color: 'Sapphire Blue', stock: 3, price: 2799 },
+    ],
+    images: [
+      {
+        url: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=1000&auto=format&fit=crop',
+        altText: 'Sapphire Blue Mirror Work Straight Kurta',
+        sortOrder: 1,
+        isPrimary: true,
+      },
+      {
+        url: 'https://images.unsplash.com/photo-1583391733956-6c78276477e2?q=80&w=1000&auto=format&fit=crop',
+        altText: 'Mirror Work Bodice Detail',
+        sortOrder: 2,
+        isPrimary: false,
+      },
+    ],
+    attributes: {
+      fabric: 'Cotton-Silk Blend',
+      pattern: 'Gujarati Mirror Hand Embroidery',
+      occasion: 'Festive & Sangeet Evenings',
+      sleeveType: 'Elbow Length Sleeves',
+      fit: 'Tailored Fit',
+      careInstructions: 'Dry Clean Only',
+    },
+    flags: {
+      isFeatured: true,
+      isNewArrival: false,
+      isBestSeller: false,
+      isActive: true,
+    },
+    seo: {
+      title: 'Sapphire Blue Mirror Work Straight Kurta | House of NF',
+      description: 'Luminous Cotton Silk Mirror work kurta for evening celebrations.',
+    },
+  },
+];
+
+export const INITIAL_SETTINGS: SiteSettings = {
+  whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919876543210',
+  instagramUrl: process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://www.instagram.com/houseofnf.in',
+  storeEmail: 'contact@houseofnf.com',
+  storePhone: '+91 98765 43210',
+  address: 'House of NF Flagship Atelier, Designer Lane, New Delhi - 110001',
+  freeShippingThreshold: 2999,
+  currencySymbol: '₹',
+};

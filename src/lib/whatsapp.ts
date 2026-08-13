@@ -37,7 +37,7 @@ export function generateWhatsAppOrderMessage(payload: WhatsAppOrderPayload): str
 }
 
 export function getWhatsAppUrl(payload: WhatsAppOrderPayload, phoneNumber?: string): string {
-  const number = phoneNumber || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919876543210';
+  const number = phoneNumber || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919664209989';
   // Clean phone number format
   const cleanedNumber = number.replace(/\D/g, '');
   const message = generateWhatsAppOrderMessage(payload);
@@ -47,7 +47,7 @@ export function getWhatsAppUrl(payload: WhatsAppOrderPayload, phoneNumber?: stri
 }
 
 export function getWhatsAppCartUrl(items: Array<{ name: string; sku: string; size: string; quantity: number; price: number }>, grandTotal: number, phoneNumber?: string): string {
-  const number = phoneNumber || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919876543210';
+  const number = phoneNumber || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919664209989';
   const cleanedNumber = number.replace(/\D/g, '');
 
   const itemsList = items

@@ -10,10 +10,10 @@ export default function AdminSettingsPage() {
   const isWhite = theme === 'white';
 
   const [settings, setSettings] = useState<SiteSettings>({
-    whatsappNumber: '919876543210',
+    whatsappNumber: '919664209989',
     instagramUrl: 'https://www.instagram.com/houseofnf.in',
-    storeEmail: 'contact@houseofnf.com',
-    storePhone: '+91 98765 43210',
+    storeEmail: 'thehouseofnf@gmail.com',
+    storePhone: '+91 96642 09989',
     address: 'House of NF Flagship Atelier, Designer Lane, New Delhi - 110001',
     freeShippingThreshold: 2999,
     currencySymbol: '₹',
@@ -259,7 +259,7 @@ export default function AdminSettingsPage() {
                 required
                 value={settings.whatsappNumber}
                 onChange={(e) => setSettings({ ...settings, whatsappNumber: e.target.value })}
-                placeholder="e.g. 919876543210"
+                placeholder="e.g. 919664209989"
                 className={`w-full text-xs font-mono p-3 focus:outline-none ${inputBg}`}
               />
               <span className={`text-[10px] mt-1 block ${textSub}`}>Used to generate all customer WhatsApp order messages.</span>

@@ -11,7 +11,7 @@ export default function Footer() {
   if (pathname.startsWith('/admin')) return null;
 
   const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://www.instagram.com/houseofnf.in';
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919876543210';
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919664209989';
 
   return (
     <footer className="bg-[#141312] text-[#F3EBDD] py-10 sm:py-14 border-t border-stone-800">
@@ -98,7 +98,7 @@ export default function Footer() {
                 <InstagramIcon className="w-3.5 h-3.5" />
               </a>
               <a
-                href="mailto:contact@houseofnf.com"
+                href="mailto:thehouseofnf@gmail.com"
                 className="w-8 h-8 rounded-full bg-stone-900 hover:bg-amber-600 flex items-center justify-center text-stone-300 hover:text-white transition-colors"
                 title="Email Support"
               >

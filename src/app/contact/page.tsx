@@ -5,7 +5,7 @@ import { MessageCircle, Mail, MapPin, Phone, Clock } from 'lucide-react';
 import InstagramIcon from '@/components/ui/InstagramIcon';
 
 export default function ContactPage() {
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919876543210';
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919664209989';
   const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://www.instagram.com/houseofnf.in';
 
   return (
@@ -36,7 +36,7 @@ export default function ContactPage() {
                 <Phone className="w-5 h-5 text-[#C5A059] flex-shrink-0" />
                 <div>
                   <strong className="block text-stone-900">Phone Support:</strong>
-                  <span>+91 98765 43210</span>
+                  <span>+91 96642 09989</span>
                 </div>
               </div>
 
@@ -44,7 +44,7 @@ export default function ContactPage() {
                 <Mail className="w-5 h-5 text-[#C5A059] flex-shrink-0" />
                 <div>
                   <strong className="block text-stone-900">Client Care Email:</strong>
-                  <span>contact@houseofnf.com</span>
+                  <span>thehouseofnf@gmail.com</span>
                 </div>
               </div>
 

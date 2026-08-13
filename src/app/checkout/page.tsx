@@ -195,7 +195,7 @@ export default function CheckoutPage() {
                   required
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+91 98765 43210"
+                  placeholder="+91 96642 09989"
                   className="w-full bg-stone-50 border border-stone-300 text-xs p-3 focus:outline-none focus:border-[#C5A059]"
                 />
               </div>

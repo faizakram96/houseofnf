@@ -361,10 +361,10 @@ export const INITIAL_PRODUCTS: Product[] = [
 ];
 
 export const INITIAL_SETTINGS: SiteSettings = {
-  whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919876543210',
+  whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '919664209989',
   instagramUrl: process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://www.instagram.com/houseofnf.in',
-  storeEmail: 'contact@houseofnf.com',
-  storePhone: '+91 98765 43210',
+  storeEmail: 'thehouseofnf@gmail.com',
+  storePhone: '+91 96642 09989',
   address: 'House of NF Flagship Atelier, Designer Lane, New Delhi - 110001',
   freeShippingThreshold: 2999,
   currencySymbol: '₹',

@@ -13,10 +13,10 @@ export interface ISettingsDocument extends Document {
 
 const SettingsSchema = new Schema<ISettingsDocument>(
   {
-    whatsappNumber: { type: String, default: '919876543210' },
+    whatsappNumber: { type: String, default: '919664209989' },
     instagramUrl: { type: String, default: 'https://www.instagram.com/houseofnf.in' },
-    storeEmail: { type: String, default: 'contact@houseofnf.com' },
-    storePhone: { type: String, default: '+91 98765 43210' },
+    storeEmail: { type: String, default: 'thehouseofnf@gmail.com' },
+    storePhone: { type: String, default: '+91 96642 09989' },
     address: { type: String, default: 'Luxury Boutique Street, New Delhi, India' },
     freeShippingThreshold: { type: Number, default: 2999 },
     currencySymbol: { type: String, default: '₹' },

@@ -57,6 +57,9 @@ export default function CheckoutPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [confirmedOrder, setConfirmedOrder] = useState<any>(null);
 
+  // Phone validation status
+  const [phoneStatus, setPhoneStatus] = useState<{ valid: boolean; message: string } | null>(null);
+
   // Indian PIN Code Auto-Lookup State
   const [pincodeLoading, setPincodeLoading] = useState(false);
   const [pincodeStatus, setPincodeStatus] = useState<{
@@ -70,12 +73,42 @@ export default function CheckoutPage() {
   const discount = 0;
   const grandTotal = subtotal + shipping - discount;
 
+  // Indian Mobile Number validation helper
+  const validateIndianPhone = (val: string) => {
+    const digits = val.replace(/[^\d]/g, '').replace(/^91/, '').replace(/^0/, '');
+    if (!digits) {
+      return { valid: false, message: 'Mobile number is required.' };
+    }
+    if (!/^[6-9]\d{9}$/.test(digits)) {
+      return { valid: false, message: 'Please enter a valid 10-digit mobile number.' };
+    }
+    return { valid: true, message: '✓ Valid 10-digit Indian Mobile Number' };
+  };
+
+  const handlePhoneChange = (val: string) => {
+    setFormData((prev) => ({ ...prev, phone: val }));
+    if (val.trim()) {
+      setPhoneStatus(validateIndianPhone(val));
+    } else {
+      setPhoneStatus(null);
+    }
+  };
+
   // Indian PIN Code lookup handler
   const handlePincodeChange = async (val: string) => {
     const cleanPincode = val.replace(/\D/g, '').slice(0, 6);
     setFormData((prev) => ({ ...prev, pincode: cleanPincode }));
 
     if (cleanPincode.length === 6) {
+      if (!/^[1-9][0-9]{5}$/.test(cleanPincode)) {
+        setPincodeStatus({
+          valid: false,
+          message: 'Please enter a valid PIN Code.',
+        });
+        setFormData((prev) => ({ ...prev, city: '', state: '' }));
+        return;
+      }
+
       setPincodeLoading(true);
       setPincodeStatus(null);
       try {
@@ -95,38 +128,29 @@ export default function CheckoutPage() {
 
           setPincodeStatus({
             valid: true,
-            message: `Delivery Available: ${fetchedCity}, ${fetchedState}`,
+            message: `✓ City & State Auto-filled: ${fetchedCity}, ${fetchedState}`,
             city: fetchedCity,
             state: fetchedState,
           });
-        } else if (/^[1-9][0-9]{5}$/.test(cleanPincode)) {
-          setPincodeStatus({
-            valid: true,
-            message: 'Valid 6-Digit Indian PIN Code Format (Delivery Available)',
-          });
         } else {
           setPincodeStatus({
             valid: false,
-            message: 'Invalid Indian PIN Code. Delivery service unconfirmed.',
+            message: 'Please enter a valid PIN Code.',
           });
+          setFormData((prev) => ({ ...prev, city: '', state: '' }));
         }
       } catch (err) {
-        if (/^[1-9][0-9]{5}$/.test(cleanPincode)) {
-          setPincodeStatus({
-            valid: true,
-            message: 'Valid 6-Digit Indian PIN Code Format (Delivery Available)',
-          });
-        } else {
-          setPincodeStatus({
-            valid: false,
-            message: 'Please enter a valid 6-digit Indian PIN Code.',
-          });
-        }
+        setPincodeStatus({
+          valid: false,
+          message: 'Please enter a valid PIN Code.',
+        });
+        setFormData((prev) => ({ ...prev, city: '', state: '' }));
       } finally {
         setPincodeLoading(false);
       }
     } else {
       setPincodeStatus(null);
+      setFormData((prev) => ({ ...prev, city: '', state: '' }));
     }
   };
 
@@ -135,38 +159,44 @@ export default function CheckoutPage() {
     e.preventDefault();
     setErrorMsg('');
 
-    if (!formData.name.trim()) {
+    if (!formData.name.trim() || formData.name.trim().length < 2) {
       setErrorMsg('Please enter your full name.');
       return;
     }
 
-    if (!formData.phone.trim() || formData.phone.trim().length < 10) {
-      setErrorMsg('A valid mobile number is required for delivery updates.');
+    const phoneValidation = validateIndianPhone(formData.phone);
+    if (!phoneValidation.valid) {
+      setErrorMsg('Please enter a valid 10-digit mobile number.');
       return;
     }
 
-    if (!formData.houseNo.trim() || !formData.street.trim()) {
-      setErrorMsg('Please enter your complete delivery street address.');
+    if (!formData.houseNo.trim()) {
+      setErrorMsg('Please enter your house/flat/building number.');
       return;
     }
 
-    if (!formData.pincode.trim() || formData.pincode.length !== 6) {
-      setErrorMsg('A valid 6-digit Indian PIN Code is required.');
+    if (!formData.street.trim()) {
+      setErrorMsg('Please enter your street/area address.');
+      return;
+    }
+
+    if (!formData.pincode.trim() || !/^[1-9][0-9]{5}$/.test(formData.pincode)) {
+      setErrorMsg('Please enter a valid 6-digit PIN Code.');
       return;
     }
 
     if (pincodeStatus && !pincodeStatus.valid) {
-      setErrorMsg('Invalid PIN Code. Please correct your PIN Code before proceeding.');
+      setErrorMsg('Please enter a valid PIN Code.');
       return;
     }
 
     if (!formData.city.trim() || !formData.state.trim()) {
-      setErrorMsg('City and State are required for shipping.');
+      setErrorMsg('City and State are required for shipping. Please enter a valid PIN Code to auto-fill.');
       return;
     }
 
     if (cart.length === 0) {
-      setErrorMsg('Your shopping bag is empty.');
+      setErrorMsg('Your shopping cart is empty.');
       return;
     }
 
@@ -525,11 +555,24 @@ export default function CheckoutPage() {
                     type="tel"
                     required
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+91 96642 09989"
-                    className="w-full bg-stone-50 border border-stone-300 text-xs p-3 focus:outline-none focus:border-[#C5A059]"
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    placeholder="+91 96642 09989 or 10-digit mobile"
+                    className={`w-full bg-stone-50 border text-xs p-3 focus:outline-none ${
+                      phoneStatus
+                        ? phoneStatus.valid
+                          ? 'border-emerald-500 focus:border-emerald-600'
+                          : 'border-red-500 focus:border-red-600'
+                        : 'border-stone-300 focus:border-[#C5A059]'
+                    }`}
                   />
-                  <span className="text-[10px] text-stone-400 font-light mt-0.5 block">Used for delivery updates & OTP notifications</span>
+                  {phoneStatus ? (
+                    <div className={`text-[11px] font-medium mt-1 flex items-center gap-1.5 ${phoneStatus.valid ? 'text-emerald-700' : 'text-red-600'}`}>
+                      {phoneStatus.valid ? <Check className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+                      <span>{phoneStatus.message}</span>
+                    </div>
+                  ) : (
+                    <span className="text-[10px] text-stone-400 font-light mt-0.5 block">Used for delivery updates & OTP notifications</span>
+                  )}
                 </div>
               </div>
 
@@ -621,26 +664,48 @@ export default function CheckoutPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block mb-1">City *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block">City *</label>
+                    {pincodeStatus?.valid && (
+                      <span className="text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 border border-emerald-200">
+                        Auto-filled
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     required
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     placeholder="e.g. Jaipur"
-                    className="w-full bg-stone-50 border border-stone-300 text-xs p-3 focus:outline-none focus:border-[#C5A059]"
+                    className={`w-full text-xs p-3 focus:outline-none ${
+                      pincodeStatus?.valid
+                        ? 'bg-stone-100/90 border border-emerald-300 text-stone-900 font-semibold'
+                        : 'bg-stone-50 border border-stone-300 focus:border-[#C5A059]'
+                    }`}
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block mb-1">State *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block">State *</label>
+                    {pincodeStatus?.valid && (
+                      <span className="text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 border border-emerald-200">
+                        Auto-filled
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     required
                     value={formData.state}
                     onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                     placeholder="e.g. Rajasthan"
-                    className="w-full bg-stone-50 border border-stone-300 text-xs p-3 focus:outline-none focus:border-[#C5A059]"
+                    className={`w-full text-xs p-3 focus:outline-none ${
+                      pincodeStatus?.valid
+                        ? 'bg-stone-100/90 border border-emerald-300 text-stone-900 font-semibold'
+                        : 'bg-stone-50 border border-stone-300 focus:border-[#C5A059]'
+                    }`}
                   />
                 </div>
 
@@ -650,7 +715,7 @@ export default function CheckoutPage() {
                     type="text"
                     readOnly
                     value={formData.country}
-                    className="w-full bg-stone-100 border border-stone-300 text-xs p-3 text-stone-500 cursor-not-allowed"
+                    className="w-full bg-stone-100 border border-stone-300 text-xs p-3 text-stone-500 cursor-not-allowed font-medium"
                   />
                 </div>
               </div>

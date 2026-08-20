@@ -10,9 +10,25 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { customer, items, notes, paymentMethod = 'upi' } = body;
 
-    if (!customer || !customer.name || !customer.phone) {
+    if (!customer || !customer.name || customer.name.trim().length < 2) {
       return NextResponse.json(
-        { success: false, error: 'Customer name and phone number are required.' },
+        { success: false, error: 'Full customer name is required (minimum 2 characters).' },
+        { status: 400 }
+      );
+    }
+
+    const cleanDigits = (customer.phone || '').replace(/[^\d]/g, '').replace(/^91/, '').replace(/^0/, '');
+    if (!/^[6-9]\d{9}$/.test(cleanDigits)) {
+      return NextResponse.json(
+        { success: false, error: 'A valid 10-digit Indian mobile number starting with 6, 7, 8, or 9 is required.' },
+        { status: 400 }
+      );
+    }
+
+    const cleanPincode = (customer.pincode || '').replace(/\D/g, '');
+    if (!/^[1-9][0-9]{5}$/.test(cleanPincode)) {
+      return NextResponse.json(
+        { success: false, error: 'A valid 6-digit Indian PIN Code is required.' },
         { status: 400 }
       );
     }

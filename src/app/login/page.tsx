@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Phone, ArrowRight, ShieldCheck, Sparkles, Globe } from 'lucide-react';
+import { Globe, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
@@ -11,6 +11,7 @@ export default function LoginPage() {
   const { sendOtp, loginWithGoogle } = useAuth();
 
   const [phone, setPhone] = useState('');
+  const [agreed, setAgreed] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -22,6 +23,11 @@ export default function LoginPage() {
     const cleanDigits = phone.replace(/\D/g, '');
     if (cleanDigits.length < 10) {
       setError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
+    if (!agreed) {
+      setError('You must agree to the Terms of Use & Privacy Policy to continue.');
       return;
     }
 
@@ -40,7 +46,6 @@ export default function LoginPage() {
     setError('');
     setGoogleLoading(true);
     try {
-      // Simulate Google OAuth popup response
       const mockSub = `google_${Date.now()}_demo`;
       const mockEmail = `customer_${Math.floor(1000 + Math.random() * 9000)}@gmail.com`;
 
@@ -58,17 +63,12 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6]">
-      <div className="max-w-md w-full space-y-8 bg-white border border-stone-200/80 p-8 sm:p-10 shadow-xl rounded-none relative overflow-hidden">
-        {/* Brand Accent Top Border */}
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#C5A059]" />
-
-        {/* Header Title */}
-        <div className="text-center space-y-2">
-          <span className="text-[10px] uppercase tracking-[0.25em] text-[#C5A059] font-bold block">
-            HOUSE OF NF • ATELIER
-          </span>
-          <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-stone-900">Welcome Back</h1>
-          <p className="text-xs text-stone-500 font-light">Login or create your luxury shopping account</p>
+      <div className="max-w-md w-full space-y-6 bg-white border border-stone-200/80 p-8 sm:p-10 shadow-xl rounded-none relative">
+        {/* Title */}
+        <div className="text-left space-y-1">
+          <h1 className="text-2xl font-bold text-[#424553]">
+            Login <span className="font-normal text-stone-500 text-lg">or</span> Signup
+          </h1>
         </div>
 
         {/* Error Alert */}
@@ -78,43 +78,71 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Phone Login Form */}
-        <form onSubmit={handlePhoneSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-[11px] font-semibold uppercase tracking-widest text-stone-700 block">
-              Mobile Number
-            </label>
-            <div className="flex items-center border border-stone-300 focus-within:border-[#C5A059] transition-colors bg-stone-50">
-              <div className="px-3.5 py-3 border-r border-stone-300 bg-stone-100/60 text-xs font-semibold text-stone-700 flex items-center gap-1">
-                <span>+91</span>
-              </div>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                placeholder="Enter 10-digit mobile number"
-                className="w-full text-xs p-3 bg-transparent text-stone-900 focus:outline-none placeholder:text-stone-400 font-mono tracking-wider"
-                maxLength={10}
-                required
-              />
-            </div>
+        {/* Form */}
+        <form onSubmit={handlePhoneSubmit} className="space-y-5">
+          {/* Input Box (+91 | Mobile Number*) */}
+          <div className="flex items-center border border-stone-300 bg-white p-3 focus-within:border-stone-800 transition-colors">
+            <span className="text-stone-600 text-sm font-medium pr-3 border-r border-stone-300 flex-shrink-0">
+              +91
+            </span>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+              placeholder="Mobile Number*"
+              className="w-full text-sm pl-3 bg-transparent text-stone-900 focus:outline-none placeholder:text-stone-400 font-medium"
+              maxLength={10}
+              required
+            />
           </div>
 
+          {/* Checkbox Terms & Conditions */}
+          <div className="flex items-start gap-2.5">
+            <input
+              type="checkbox"
+              id="terms-checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="mt-0.5 w-4 h-4 text-[#ff3f6c] accent-[#ff3f6c] border-stone-300 rounded focus:ring-0 cursor-pointer"
+            />
+            <label htmlFor="terms-checkbox" className="text-xs text-stone-600 leading-relaxed cursor-pointer">
+              By continuing, I agree to the{' '}
+              <Link href="/terms" className="font-bold text-[#ff3f6c] hover:underline">
+                Terms of Use
+              </Link>{' '}
+              &{' '}
+              <Link href="/privacy" className="font-bold text-[#ff3f6c] hover:underline">
+                Privacy Policy
+              </Link>{' '}
+              and I am above 18 years old.
+            </label>
+          </div>
+
+          {/* CONTINUE CTA Button */}
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-[#C5A059] hover:bg-[#B38E46] text-stone-950 font-bold text-xs uppercase tracking-widest py-3.5 px-4 transition-colors shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            disabled={loading || phone.length < 10 || !agreed}
+            className={`w-full font-bold text-xs uppercase tracking-wider py-3.5 px-4 transition-all text-white ${
+              phone.length === 10 && agreed
+                ? 'bg-[#ff3f6c] hover:bg-[#e0355c] cursor-pointer shadow-md'
+                : 'bg-[#94969f] cursor-not-allowed opacity-90'
+            }`}
           >
-            {loading ? (
-              <span>Sending OTP...</span>
-            ) : (
-              <>
-                <span>Continue</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
+            {loading ? 'SENDING OTP...' : 'CONTINUE'}
           </button>
         </form>
+
+        {/* Help Link */}
+        <div className="text-xs text-stone-600 text-left pt-1">
+          Have trouble logging in?{' '}
+          <button
+            type="button"
+            onClick={() => alert('For support, email thehouseofnf@gmail.com or call +91 96642 09989.')}
+            className="font-bold text-[#ff3f6c] hover:underline cursor-pointer"
+          >
+            Get help
+          </button>
+        </div>
 
         {/* Divider */}
         <div className="relative flex py-2 items-center">
@@ -136,25 +164,6 @@ export default function LoginPage() {
             <Globe className="w-4 h-4 text-emerald-600" />
             <span>{googleLoading ? 'Connecting to Google...' : 'Continue with Google'}</span>
           </button>
-        </div>
-
-        {/* Terms & Guarantees */}
-        <div className="pt-4 border-t border-stone-200/60 text-center space-y-3">
-          <div className="flex items-center justify-center gap-2 text-[11px] text-stone-500 font-light">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>Secure 100% Encrypted Authentication</span>
-          </div>
-
-          <p className="text-[10px] text-stone-400 leading-relaxed">
-            By continuing, you agree to House of NF's{' '}
-            <Link href="/terms" className="underline hover:text-stone-700">
-              Terms of Use
-            </Link>{' '}
-            &{' '}
-            <Link href="/privacy" className="underline hover:text-stone-700">
-              Privacy Policy
-            </Link>
-          </p>
         </div>
       </div>
     </div>

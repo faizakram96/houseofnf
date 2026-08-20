@@ -44,6 +44,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [cart]);
 
+  const saveToLocalStorage = (updatedCart: CartItem[]) => {
+    try {
+      localStorage.setItem('hnf_cart', JSON.stringify(updatedCart));
+    } catch (e) {
+      console.warn('Failed to save cart to localStorage:', e);
+    }
+  };
+
   const addToCart = (product: Product, size: 'S' | 'M' | 'L' | 'XL' | 'XXL', quantity = 1, color?: string) => {
     setCart((prev) => {
       const selectedColor = color || product.variants.find((v) => v.size === size)?.color || 'Default';
@@ -51,23 +59,31 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         (item) => (item.product.id === product.id || item.product._id === product._id) && item.selectedSize === size
       );
 
+      let updated: CartItem[];
       if (existingIdx > -1) {
-        const updated = [...prev];
-        updated[existingIdx].quantity += quantity;
-        return updated;
+        updated = [...prev];
+        updated[existingIdx] = {
+          ...updated[existingIdx],
+          quantity: updated[existingIdx].quantity + quantity,
+        };
+      } else {
+        updated = [...prev, { product, selectedSize: size, selectedColor, quantity }];
       }
 
-      return [...prev, { product, selectedSize: size, selectedColor, quantity }];
+      saveToLocalStorage(updated);
+      return updated;
     });
     setIsCartOpen(true);
   };
 
   const removeFromCart = (productId: string, size: string) => {
-    setCart((prev) =>
-      prev.filter(
+    setCart((prev) => {
+      const updated = prev.filter(
         (item) => !( (item.product.id === productId || item.product._id === productId) && item.selectedSize === size )
-      )
-    );
+      );
+      saveToLocalStorage(updated);
+      return updated;
+    });
   };
 
   const updateQuantity = (productId: string, size: string, quantity: number) => {
@@ -75,17 +91,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       removeFromCart(productId, size);
       return;
     }
-    setCart((prev) =>
-      prev.map((item) => {
+    setCart((prev) => {
+      const updated = prev.map((item) => {
         if ((item.product.id === productId || item.product._id === productId) && item.selectedSize === size) {
           return { ...item, quantity };
         }
         return item;
-      })
-    );
+      });
+      saveToLocalStorage(updated);
+      return updated;
+    });
   };
 
   const clearCart = () => {
+    saveToLocalStorage([]);
     setCart([]);
   };
 

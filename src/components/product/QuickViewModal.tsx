@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { X, ShoppingBag, MessageCircle, Check, ShieldCheck } from 'lucide-react';
 import { Product } from '@/types';
 import { useCart } from '@/context/CartContext';
@@ -18,6 +19,7 @@ export default function QuickViewModal({
   onClose: () => void;
 }) {
   const { addToCart } = useCart();
+  const router = useRouter();
   const [selectedSize, setSelectedSize] = useState<'S' | 'M' | 'L' | 'XL' | 'XXL'>('M');
   const [activeImgIndex, setActiveImgIndex] = useState(0);
 
@@ -129,7 +131,7 @@ export default function QuickViewModal({
                     onClick={() => {
                       addToCart(product, selectedSize, 1);
                       onClose();
-                      window.location.href = '/cart';
+                      router.push('/cart');
                     }}
                     className="w-full bg-[#141312] hover:bg-[#C5A059] text-[#F3EBDD] hover:text-stone-950 text-xs uppercase tracking-widest py-3 px-4 font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
                   >

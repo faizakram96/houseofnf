@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Eye, MessageCircle, ArrowRight, X } from 'lucide-react';
 import { Product } from '@/types';
 import { useCart } from '@/context/CartContext';
@@ -11,6 +12,7 @@ import { formatPrice } from '@/lib/utils';
 
 export default function ProductCard({ product }: { product: Product }) {
   const { addToCart } = useCart();
+  const router = useRouter();
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const [isSizeSelectOpen, setIsSizeSelectOpen] = useState(false);
   const [selectedSize, setSelectedSize] = useState<'S' | 'M' | 'L' | 'XL' | 'XXL'>('M');
@@ -32,7 +34,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
   const handleBuyNow = (size: 'S' | 'M' | 'L' | 'XL' | 'XXL') => {
     addToCart(product, size, 1);
-    window.location.href = '/cart';
+    router.push('/cart');
   };
 
   return (
@@ -169,7 +171,7 @@ export default function ProductCard({ product }: { product: Product }) {
               onClick={() => handleBuyNow(selectedSize)}
               className="w-full bg-[#141312] hover:bg-[#C5A059] text-[#F3EBDD] hover:text-stone-950 font-bold text-xs uppercase tracking-[0.2em] py-3.5 transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer"
             >
-              <span>PROCEED TO ADDRESS & PAY</span>
+              <span>BUY NOW</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

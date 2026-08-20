@@ -49,7 +49,7 @@ export default function CheckoutPage() {
     notes: '',
   });
 
-  const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'cod' | 'whatsapp'>('razorpay');
+  const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'whatsapp'>('razorpay');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [confirmedOrder, setConfirmedOrder] = useState<any>(null);
@@ -284,42 +284,8 @@ export default function CheckoutPage() {
         });
 
         rzp.open();
-      } else if (paymentMethod === 'cod') {
-        // --- 2. CASH ON DELIVERY (COD) FLOW ---
-        const orderPayload = {
-          customer: customerPayload,
-          items: cart.map((item) => ({
-            productId: item.product.id || item.product._id,
-            productName: item.product.name,
-            sku: item.product.sku,
-            size: item.selectedSize,
-            color: item.selectedColor || 'Default',
-            quantity: item.quantity,
-            unitPrice: item.product.pricing.price,
-            totalPrice: item.product.pricing.price * item.quantity,
-            image: item.product.images[0]?.url,
-          })),
-          pricing: { subtotal, discount: 0, shipping, tax: 0, grandTotal },
-          payment: { gateway: 'cod', method: 'cod', status: 'Pending' },
-          orderStatus: 'Confirmed',
-          source: 'Website',
-        };
-
-        const res = await fetch('/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(orderPayload),
-        });
-
-        const json = await res.json();
-        if (json.success) {
-          setConfirmedOrder(json.data);
-          clearCart();
-        } else {
-          setErrorMsg(json.error || 'Failed to place COD order.');
-        }
       } else {
-        // --- 3. WHATSAPP ORDER FLOW ---
+        // --- 2. WHATSAPP ORDER FLOW ---
         const orderPayload = {
           customer: customerPayload,
           items: cart.map((item) => ({
@@ -366,7 +332,6 @@ export default function CheckoutPage() {
   // --- ORDER CONFIRMATION SCREEN ---
   if (confirmedOrder) {
     const isPaid = confirmedOrder.payment?.status === 'Paid';
-    const isCOD = confirmedOrder.payment?.gateway === 'cod' || confirmedOrder.payment?.method === 'cod';
 
     const orderRef = confirmedOrder.orderNumber || `HNF-${Math.floor(10000 + Math.random() * 90000)}`;
 
@@ -382,13 +347,13 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen bg-[#FAF9F6] py-16 flex items-center justify-center">
         <div className="max-w-xl w-full mx-4 bg-white p-8 sm:p-12 border border-stone-200 shadow-2xl text-center space-y-6">
-          <div className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center ${isPaid ? 'bg-emerald-100 text-emerald-600' : isCOD ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}`}>
+          <div className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center ${isPaid ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}`}>
             <CheckCircle2 className="w-10 h-10" />
           </div>
 
           <div>
             <span className="text-[10px] uppercase tracking-[0.3em] text-[#C5A059] font-bold block mb-1">
-              {isPaid ? 'PAYMENT VERIFIED & ORDER CONFIRMED' : isCOD ? 'COD ORDER PLACED' : 'ORDER RESERVED'}
+              {isPaid ? 'PAYMENT VERIFIED & ORDER CONFIRMED' : 'ORDER RESERVED'}
             </span>
             <h1 className="font-serif text-3xl font-bold text-stone-900">
               Thank You, {confirmedOrder.customer?.name}!
@@ -405,7 +370,7 @@ export default function CheckoutPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-stone-500">Payment Method:</span>
-              <span className="font-semibold uppercase text-stone-800">{isPaid ? 'Online Payment (Razorpay)' : isCOD ? 'Cash on Delivery (COD)' : 'WhatsApp Order'}</span>
+              <span className="font-semibold uppercase text-stone-800">{isPaid ? 'Online Payment (Razorpay)' : 'WhatsApp Order'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-stone-500">Payment Status:</span>
@@ -686,32 +651,6 @@ export default function CheckoutPage() {
                 </div>
               </label>
 
-              {/* Cash on Delivery (COD) Option */}
-              <label
-                className={`flex items-start gap-4 p-4 border cursor-pointer transition-all ${
-                  paymentMethod === 'cod'
-                    ? 'border-[#C5A059] bg-[#C5A059]/5 ring-1 ring-[#C5A059]'
-                    : 'border-stone-200 bg-white hover:border-stone-400'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="cod"
-                  checked={paymentMethod === 'cod'}
-                  onChange={() => setPaymentMethod('cod')}
-                  className="mt-1 accent-[#C5A059]"
-                />
-                <div>
-                  <span className="font-semibold text-xs text-stone-900 uppercase tracking-wider block">
-                    Cash on Delivery (COD)
-                  </span>
-                  <p className="text-xs text-stone-500 font-light mt-0.5">
-                    Pay cash to the courier representative upon delivery at your address.
-                  </p>
-                </div>
-              </label>
-
               {/* WhatsApp Order Option */}
               <label
                 className={`flex items-start gap-4 p-4 border cursor-pointer transition-all ${
@@ -786,8 +725,6 @@ export default function CheckoutPage() {
                   ? 'Initializing Payment...'
                   : paymentMethod === 'razorpay'
                   ? `Pay ${formatPrice(grandTotal)} Now`
-                  : paymentMethod === 'cod'
-                  ? 'Place COD Order'
                   : 'Reserve on WhatsApp'}
                 <ArrowRight className="w-4 h-4" />
               </button>

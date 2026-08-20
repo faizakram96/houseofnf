@@ -208,9 +208,9 @@ export default function OutfitReelShowcase() {
                   <div className="pt-2 flex items-center gap-2">
                     <button
                       onClick={() => setQuickViewProduct(reel.product)}
-                      className="flex-1 bg-[#C5A059] hover:bg-[#B38E46] text-stone-950 font-bold text-xs uppercase tracking-widest py-3 flex items-center justify-center gap-2 transition-all shadow-lg"
+                      className="flex-1 bg-[#C5A059] hover:bg-[#B38E46] text-stone-950 font-bold text-xs uppercase tracking-widest py-3 flex items-center justify-center gap-2 transition-all shadow-lg cursor-pointer"
                     >
-                      <ShoppingBag className="w-3.5 h-3.5" /> Shop This Look
+                      <ArrowRight className="w-3.5 h-3.5 stroke-[2]" /> BUY THIS LOOK
                     </button>
 
                     <button

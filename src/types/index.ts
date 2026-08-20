@@ -186,6 +186,75 @@ export interface CartItem {
   quantity: number;
 }
 
+export type AuthProviderType = 'PHONE' | 'GOOGLE' | 'APPLE';
+
+export interface UserAccount {
+  _id?: string;
+  id?: string;
+  status: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
+  isPhoneVerified: boolean;
+  isEmailVerified: boolean;
+  role: 'admin' | 'staff' | 'customer';
+  lastLoginAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AuthIdentity {
+  _id?: string;
+  id?: string;
+  userId: string;
+  provider: AuthProviderType;
+  providerUserId: string;
+  identifierEmail?: string;
+  identifierPhone?: string;
+  isVerified: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface UserProfileType {
+  userId: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  avatarUrl?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PhoneVerificationType {
+  _id?: string;
+  phoneNumber: string;
+  purpose: 'LOGIN' | 'LINK_ACCOUNT' | 'UPDATE_PHONE';
+  attemptCount: number;
+  maxAttempts: number;
+  isVerified: boolean;
+  expiresAt: string;
+  createdAt?: string;
+}
+
+export interface SavedAddress {
+  _id?: string;
+  id?: string;
+  userId: string;
+  fullName: string;
+  phoneNumber: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  country: string;
+  postalCode: string;
+  addressType: 'HOME' | 'WORK' | 'OTHER';
+  isDefault: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface User {
   _id?: string;
   id?: string;

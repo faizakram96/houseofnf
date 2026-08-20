@@ -29,11 +29,21 @@ export interface IOrderDocument extends Document {
     grandTotal: number;
   };
   payment: {
-    method: 'WhatsApp' | 'Instagram' | 'COD' | 'Online';
+    gateway: 'razorpay' | 'cod' | 'whatsapp' | 'instagram' | 'manual';
+    method: 'upi' | 'card' | 'netbanking' | 'wallet' | 'cod' | 'whatsapp' | 'manual';
     status: 'Pending' | 'Initiated' | 'Paid' | 'Failed' | 'Refunded';
+    orderId?: string;
+    paymentId?: string;
+    signature?: string;
     transactionId?: string;
+    refundStatus?: 'None' | 'Requested' | 'Processed' | 'Failed';
+    refundId?: string;
+    refundAmount?: number;
+    paidAt?: Date;
+    errorDescription?: string;
   };
   orderStatus:
+    | 'Pending Payment'
     | 'Pending'
     | 'Confirmed'
     | 'Processing'
@@ -80,21 +90,40 @@ const OrderSchema = new Schema<IOrderDocument>(
       grandTotal: { type: Number, required: true },
     },
     payment: {
+      gateway: {
+        type: String,
+        enum: ['razorpay', 'cod', 'whatsapp', 'instagram', 'manual'],
+        default: 'razorpay',
+      },
       method: {
         type: String,
-        enum: ['WhatsApp', 'Instagram', 'COD', 'Online'],
-        default: 'WhatsApp',
+        enum: ['upi', 'card', 'netbanking', 'wallet', 'cod', 'whatsapp', 'manual'],
+        default: 'upi',
       },
       status: {
         type: String,
         enum: ['Pending', 'Initiated', 'Paid', 'Failed', 'Refunded'],
         default: 'Pending',
+        index: true,
       },
+      orderId: { type: String, index: true },
+      paymentId: { type: String, index: true },
+      signature: { type: String },
       transactionId: { type: String },
+      refundStatus: {
+        type: String,
+        enum: ['None', 'Requested', 'Processed', 'Failed'],
+        default: 'None',
+      },
+      refundId: { type: String },
+      refundAmount: { type: Number, default: 0 },
+      paidAt: { type: Date },
+      errorDescription: { type: String, default: '' },
     },
     orderStatus: {
       type: String,
       enum: [
+        'Pending Payment',
         'Pending',
         'Confirmed',
         'Processing',
@@ -104,7 +133,7 @@ const OrderSchema = new Schema<IOrderDocument>(
         'Cancelled',
         'Returned',
       ],
-      default: 'Pending',
+      default: 'Pending Payment',
       index: true,
     },
     source: {

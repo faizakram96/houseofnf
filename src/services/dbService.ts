@@ -46,7 +46,8 @@ let memoryOrders: Order[] = [
       grandTotal: 4999,
     },
     payment: {
-      method: 'WhatsApp',
+      gateway: 'whatsapp',
+      method: 'whatsapp',
       status: 'Pending',
     },
     orderStatus: 'Confirmed',
@@ -390,8 +391,8 @@ export async function createOrder(orderData: Partial<Order>): Promise<Order> {
       tax: 0,
       grandTotal: 0,
     },
-    payment: orderData.payment || { method: 'WhatsApp', status: 'Pending' },
-    orderStatus: 'Pending',
+    payment: orderData.payment || { gateway: 'whatsapp', method: 'whatsapp', status: 'Pending' },
+    orderStatus: 'Pending Payment',
     source: orderData.source || 'Website',
     createdAt: new Date().toISOString(),
   };
@@ -424,7 +425,9 @@ export async function getOrders(): Promise<Order[]> {
           payment: d.payment,
           orderStatus: d.orderStatus,
           source: d.source,
+          notes: d.notes,
           createdAt: d.createdAt?.toISOString(),
+          updatedAt: d.updatedAt?.toISOString(),
         }));
       }
     }
@@ -434,7 +437,151 @@ export async function getOrders(): Promise<Order[]> {
   return memoryOrders;
 }
 
+export async function getOrderById(id: string): Promise<Order | null> {
+  try {
+    const conn = await connectToDatabase();
+    if (conn) {
+      const isMongoId = id.length === 24 && /^[0-9a-fA-F]{24}$/.test(id);
+      const filterConditions = [
+        isMongoId ? { _id: id } : null,
+        { id: id },
+        { orderNumber: id },
+        { 'payment.orderId': id },
+      ].filter(Boolean);
+
+      const doc: any = await OrderModel.findOne({
+        $or: filterConditions,
+      } as any).lean();
+
+      if (doc) {
+        return {
+          id: doc._id.toString(),
+          orderNumber: doc.orderNumber,
+          customer: doc.customer,
+          items: doc.items,
+          pricing: doc.pricing,
+          payment: doc.payment,
+          orderStatus: doc.orderStatus,
+          source: doc.source,
+          notes: doc.notes,
+          createdAt: doc.createdAt?.toISOString(),
+          updatedAt: doc.updatedAt?.toISOString(),
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('getOrderById error:', err);
+  }
+
+  const memOrder = memoryOrders.find((o) => o.id === id || o.orderNumber === id);
+  return memOrder || null;
+}
+
+export async function updateOrderPaymentDetails(
+  id: string,
+  paymentDetails: Partial<Order['payment']> & { orderStatus?: Order['orderStatus'] }
+): Promise<Order | null> {
+  const { orderStatus, ...paymentUpdates } = paymentDetails;
+
+  try {
+    const conn = await connectToDatabase();
+    if (conn) {
+      const updateFields: any = {};
+      Object.keys(paymentUpdates).forEach((key) => {
+        updateFields[`payment.${key}`] = (paymentUpdates as any)[key];
+      });
+
+      if (orderStatus) {
+        updateFields.orderStatus = orderStatus;
+      }
+
+      const isMongoId = id.length === 24 && /^[0-9a-fA-F]{24}$/.test(id);
+      const filterConditions = [
+        isMongoId ? { _id: id } : null,
+        { id: id },
+        { orderNumber: id },
+        { 'payment.orderId': id },
+      ].filter(Boolean);
+
+      const updatedDoc: any = await OrderModel.findOneAndUpdate(
+        { $or: filterConditions } as any,
+        { $set: updateFields },
+        { new: true }
+      ).lean();
+
+      if (updatedDoc) {
+        const mapped: Order = {
+          id: updatedDoc._id.toString(),
+          orderNumber: updatedDoc.orderNumber,
+          customer: updatedDoc.customer,
+          items: updatedDoc.items,
+          pricing: updatedDoc.pricing,
+          payment: updatedDoc.payment,
+          orderStatus: updatedDoc.orderStatus,
+          source: updatedDoc.source,
+          notes: updatedDoc.notes,
+          createdAt: updatedDoc.createdAt?.toISOString(),
+          updatedAt: updatedDoc.updatedAt?.toISOString(),
+        };
+
+        const memIdx = memoryOrders.findIndex((o) => o.id === id || o.orderNumber === id);
+        if (memIdx !== -1) memoryOrders[memIdx] = mapped;
+        return mapped;
+      }
+    }
+  } catch (err) {
+    console.warn('updateOrderPaymentDetails error:', err);
+  }
+
+  // Memory fallback
+  const order = memoryOrders.find((o) => o.id === id || o.orderNumber === id);
+  if (order) {
+    order.payment = { ...order.payment, ...paymentUpdates };
+    if (orderStatus) order.orderStatus = orderStatus;
+    return order;
+  }
+  return null;
+}
+
 export async function updateOrderStatus(id: string, status: Order['orderStatus']): Promise<Order | null> {
+  try {
+    const conn = await connectToDatabase();
+    if (conn) {
+      const isMongoId = id.length === 24 && /^[0-9a-fA-F]{24}$/.test(id);
+      const filterConditions = [
+        isMongoId ? { _id: id } : null,
+        { id: id },
+        { orderNumber: id },
+      ].filter(Boolean);
+
+      const updatedDoc: any = await OrderModel.findOneAndUpdate(
+        { $or: filterConditions } as any,
+        { $set: { orderStatus: status } },
+        { new: true }
+      ).lean();
+
+      if (updatedDoc) {
+        const mapped: Order = {
+          id: updatedDoc._id.toString(),
+          orderNumber: updatedDoc.orderNumber,
+          customer: updatedDoc.customer,
+          items: updatedDoc.items,
+          pricing: updatedDoc.pricing,
+          payment: updatedDoc.payment,
+          orderStatus: updatedDoc.orderStatus,
+          source: updatedDoc.source,
+          createdAt: updatedDoc.createdAt?.toISOString(),
+          updatedAt: updatedDoc.updatedAt?.toISOString(),
+        };
+        const memIdx = memoryOrders.findIndex((o) => o.id === id || o.orderNumber === id);
+        if (memIdx !== -1) memoryOrders[memIdx] = mapped;
+        return mapped;
+      }
+    }
+  } catch (err) {
+    console.warn('updateOrderStatus error:', err);
+  }
+
   const order = memoryOrders.find((o) => o.id === id || o.orderNumber === id);
   if (order) {
     order.orderStatus = status;

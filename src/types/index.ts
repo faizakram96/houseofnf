@@ -114,13 +114,27 @@ export interface OrderPricing {
   grandTotal: number;
 }
 
+export type PaymentStatus = 'Pending' | 'Initiated' | 'Paid' | 'Failed' | 'Refunded';
+
+export type RefundStatus = 'None' | 'Requested' | 'Processed' | 'Failed';
+
 export interface OrderPayment {
-  method: 'WhatsApp' | 'Instagram' | 'COD' | 'Online';
-  status: 'Pending' | 'Initiated' | 'Paid' | 'Failed' | 'Refunded';
+  gateway: 'razorpay' | 'cod' | 'whatsapp' | 'instagram' | 'manual';
+  method: 'upi' | 'card' | 'netbanking' | 'wallet' | 'cod' | 'whatsapp' | 'manual';
+  status: PaymentStatus;
+  orderId?: string; // Razorpay Order ID (e.g. order_xyz)
+  paymentId?: string; // Razorpay Payment ID (e.g. pay_xyz)
+  signature?: string;
   transactionId?: string;
+  refundStatus?: RefundStatus;
+  refundId?: string;
+  refundAmount?: number;
+  paidAt?: string;
+  errorDescription?: string;
 }
 
 export type OrderStatus =
+  | 'Pending Payment'
   | 'Pending'
   | 'Confirmed'
   | 'Processing'

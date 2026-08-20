@@ -8,10 +8,10 @@ export const getRazorpayInstance = () => {
   const key_id =
     process.env.RAZORPAY_KEY_ID ||
     process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-    'rzp_test_houseofnf_key';
+    'rzp_test_TRx1C45SujawMV';
 
   const key_secret =
-    process.env.RAZORPAY_KEY_SECRET || 'rzp_test_secret_houseofnf';
+    process.env.RAZORPAY_KEY_SECRET || '8Jc0PrlG794sLKwRNFySgHK2';
 
   return new Razorpay({
     key_id,
@@ -29,7 +29,7 @@ export function verifyRazorpaySignature(
   signature: string
 ): boolean {
   try {
-    const secret = process.env.RAZORPAY_KEY_SECRET || 'rzp_test_secret_houseofnf';
+    const secret = process.env.RAZORPAY_KEY_SECRET || '8Jc0PrlG794sLKwRNFySgHK2';
     const text = `${orderId}|${paymentId}`;
     const expectedSignature = crypto
       .createHmac('sha256', secret)

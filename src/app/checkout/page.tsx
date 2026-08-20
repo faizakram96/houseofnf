@@ -234,7 +234,7 @@ export default function CheckoutPage() {
                   type="text"
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  placeholder="e.g. New Delhi"
+                  placeholder="e.g. Jaipur"
                   className="w-full bg-stone-50 border border-stone-300 text-xs p-3 focus:outline-none focus:border-[#C5A059]"
                 />
               </div>
@@ -245,7 +245,7 @@ export default function CheckoutPage() {
                   type="text"
                   value={formData.pincode}
                   onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                  placeholder="110001"
+                  placeholder="302017"
                   className="w-full bg-stone-50 border border-stone-300 text-xs p-3 focus:outline-none focus:border-[#C5A059]"
                 />
               </div>

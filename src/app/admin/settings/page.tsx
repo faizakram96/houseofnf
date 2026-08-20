@@ -14,7 +14,7 @@ export default function AdminSettingsPage() {
     instagramUrl: 'https://www.instagram.com/houseofnf.in',
     storeEmail: 'thehouseofnf@gmail.com',
     storePhone: '+91 96642 09989',
-    address: 'House of NF Flagship Atelier, Designer Lane, New Delhi - 110001',
+    address: 'Flagship Atelier: Malviya Nagar, Jaipur - 302017, India',
     freeShippingThreshold: 2999,
     currencySymbol: '₹',
   });

@@ -47,7 +47,7 @@ const FALLBACK_INSTAGRAM_POSTS: InstagramMediaItem[] = [
   },
   {
     id: 'ig-004',
-    caption: 'Behind the scenes at our New Delhi Atelier weaving timeless Indian couture. #AtelierDiaries #ArtisanCraft',
+    caption: 'Behind the scenes at our Jaipur Atelier curating timeless Indian fashion. #HouseOfNF #JaipurFashion',
     media_type: 'CAROUSEL_ALBUM',
     media_url: 'https://images.unsplash.com/photo-1563178406-4cdc2923acbc?q=80&w=1000&auto=format&fit=crop',
     permalink: 'https://www.instagram.com/houseofnf.in',

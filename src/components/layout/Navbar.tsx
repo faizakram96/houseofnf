@@ -3,15 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShoppingBag, Heart, Search, Menu, X, ArrowRight, User as UserIcon } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, ArrowRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { useWishlist } from '@/context/WishlistContext';
 import SearchModal from '@/components/layout/SearchModal';
 
 export default function Navbar() {
   const pathname = usePathname();
   const { cartCount, setIsCartOpen } = useCart();
-  const { wishlistCount } = useWishlist();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -95,7 +93,7 @@ export default function Navbar() {
                   HOUSE OF NF
                 </span>
                 <span className="text-[8px] sm:text-[9px] tracking-[0.2em] sm:tracking-[0.35em] text-[#C5A059] uppercase block font-medium -mt-1 whitespace-nowrap">
-                  ATELIER • NEW DELHI
+                  FLAGSHIP ATELIER • JAIPUR
                 </span>
               </Link>
             </div>
@@ -128,21 +126,6 @@ export default function Navbar() {
               >
                 <Search className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.75]" />
               </button>
-
-              {/* Wishlist Link */}
-              <Link href="/wishlist" className="p-1.5 sm:p-2 text-stone-700 hover:text-[#C5A059] transition-colors relative" title="Wishlist">
-                <Heart className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.75]" />
-                {wishlistCount > 0 && (
-                  <span className="absolute top-0.5 right-0.5 bg-[#C5A059] text-white text-[9px] w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full flex items-center justify-center font-bold">
-                    {wishlistCount}
-                  </span>
-                )}
-              </Link>
-
-              {/* User Account / Portal Login Link */}
-              <Link href="/login" className="p-1.5 sm:p-2 text-stone-700 hover:text-[#C5A059] transition-colors" title="Account Portal Login">
-                <UserIcon className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.75]" />
-              </Link>
 
               {/* Cart Drawer Trigger */}
               <button
@@ -196,24 +179,14 @@ export default function Navbar() {
                     </Link>
                   );
                 })}
-
-                <div className="pt-4 border-t border-stone-200">
-                  <Link
-                    href="/login"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="block text-xs uppercase tracking-[0.2em] font-bold text-[#C5A059] py-2"
-                  >
-                    My Account / Login
-                  </Link>
-                </div>
               </nav>
             </div>
 
             <div className="pt-6 border-t border-stone-200 text-center space-y-2">
               <span className="text-[10px] uppercase tracking-widest text-stone-500 block">
-                ATELIER • NEW DELHI
+                FLAGSHIP ATELIER • JAIPUR
               </span>
-              <p className="text-[10px] text-stone-400">Crafted with Luxury Indian Weaves</p>
+              <p className="text-[10px] text-stone-400">Curated Indian Fashion Destination</p>
             </div>
           </div>
         </div>

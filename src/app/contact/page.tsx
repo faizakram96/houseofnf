@@ -28,7 +28,7 @@ export default function ContactPage() {
                 <MapPin className="w-5 h-5 text-[#C5A059] flex-shrink-0" />
                 <div>
                   <strong className="block text-stone-900">Flagship Atelier:</strong>
-                  <span>Designer Lane, Main Fashion Boulevard, New Delhi - 110001, India</span>
+                  <span>Malviya Nagar, Jaipur - 302017, India</span>
                 </div>
               </div>
 

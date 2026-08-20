@@ -1,8 +1,7 @@
-'use client';
-
 import React, { useState, useRef } from 'react';
-import { Upload, Image as ImageIcon, Trash2, Check, Plus, Link as LinkIcon } from 'lucide-react';
-import { ProductImage } from '@/types';
+import { Upload, Image as ImageIcon, Trash2, Check, Plus, Link as LinkIcon, Crop } from 'lucide-react';
+import { ProductImage, ImageTransformSettings } from '@/types';
+import ImageEditorModal from '@/components/admin/ImageEditorModal';
 
 interface FileUploadProps {
   images: ProductImage[];
@@ -14,6 +13,7 @@ export default function FileUpload({ images, onChange, theme = 'black' }: FileUp
   const [isUploading, setIsUploading] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlInput, setUrlInput] = useState('');
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,7 +69,6 @@ export default function FileUpload({ images, onChange, theme = 'black' }: FileUp
 
   const handleRemoveImage = (index: number) => {
     const updated = images.filter((_, idx) => idx !== index);
-    // If we removed the primary image, make the first remaining image primary
     if (images[index]?.isPrimary && updated.length > 0) {
       updated[0].isPrimary = true;
     }
@@ -82,6 +81,22 @@ export default function FileUpload({ images, onChange, theme = 'black' }: FileUp
       isPrimary: idx === index,
     }));
     onChange(updated);
+  };
+
+  const handleSaveTransform = (croppedUrl: string, transform: ImageTransformSettings) => {
+    if (editingIndex === null) return;
+    const updated = images.map((img, idx) => {
+      if (idx === editingIndex) {
+        return {
+          ...img,
+          url: transform.croppedImageUrl || croppedUrl,
+          transform,
+        };
+      }
+      return img;
+    });
+    onChange(updated);
+    setEditingIndex(null);
   };
 
   const isWhite = theme === 'white';
@@ -101,17 +116,15 @@ export default function FileUpload({ images, onChange, theme = 'black' }: FileUp
       {/* Drag & Drop / Click Upload Box */}
       <div
         onClick={() => fileInputRef.current?.click()}
-        className={`border-2 border-dashed p-8 text-center cursor-pointer transition-all ${
-          isWhite
-            ? 'border-stone-300 bg-stone-50 hover:bg-stone-100 hover:border-[#C5A059]'
-            : 'border-stone-800 bg-stone-900/60 hover:bg-stone-900 hover:border-[#C5A059]'
-        }`}
+        className={`border-2 border-dashed p-8 text-center cursor-pointer transition-all ${isWhite
+          ? 'border-stone-300 bg-stone-50 hover:bg-stone-100 hover:border-[#C5A059]'
+          : 'border-stone-800 bg-stone-900/60 hover:bg-stone-900 hover:border-[#C5A059]'
+          }`}
       >
         <div className="flex flex-col items-center justify-center space-y-3">
           <div
-            className={`w-12 h-12 rounded-full flex items-center justify-center ${
-              isWhite ? 'bg-[#F3EBDD] text-[#C5A059]' : 'bg-stone-800 text-[#C5A059]'
-            }`}
+            className={`w-12 h-12 rounded-full flex items-center justify-center ${isWhite ? 'bg-[#F3EBDD] text-[#C5A059]' : 'bg-stone-800 text-[#C5A059]'
+              }`}
           >
             <Upload className="w-6 h-6 stroke-[1.5]" />
           </div>
@@ -131,9 +144,8 @@ export default function FileUpload({ images, onChange, theme = 'black' }: FileUp
         <button
           type="button"
           onClick={() => setShowUrlInput(!showUrlInput)}
-          className={`text-xs flex items-center gap-1 font-medium ${
-            isWhite ? 'text-stone-600 hover:text-[#C5A059]' : 'text-stone-400 hover:text-[#C5A059]'
-          }`}
+          className={`text-xs flex items-center gap-1 font-medium ${isWhite ? 'text-stone-600 hover:text-[#C5A059]' : 'text-stone-400 hover:text-[#C5A059]'
+            }`}
         >
           <LinkIcon className="w-3.5 h-3.5" />
           {showUrlInput ? 'Hide URL Option' : 'Or Paste Web Image URL'}
@@ -147,9 +159,8 @@ export default function FileUpload({ images, onChange, theme = 'black' }: FileUp
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
             placeholder="https://..."
-            className={`flex-1 text-xs p-2.5 border focus:outline-none focus:border-[#C5A059] ${
-              isWhite ? 'bg-white border-stone-300 text-stone-900' : 'bg-stone-900 border-stone-800 text-stone-200'
-            }`}
+            className={`flex-1 text-xs p-2.5 border focus:outline-none focus:border-[#C5A059] ${isWhite ? 'bg-white border-stone-300 text-stone-900' : 'bg-stone-900 border-stone-800 text-stone-200'
+              }`}
           />
           <button
             type="submit"
@@ -166,15 +177,32 @@ export default function FileUpload({ images, onChange, theme = 'black' }: FileUp
           {images.map((img, idx) => (
             <div
               key={idx}
-              className={`relative aspect-[3/4] border overflow-hidden group transition-all ${
-                isWhite ? 'bg-stone-100 border-stone-300' : 'bg-stone-900 border-stone-800'
-              } ${img.isPrimary ? 'ring-2 ring-[#C5A059]' : ''}`}
+              className={`relative aspect-[3/4] border overflow-hidden group transition-all ${isWhite ? 'bg-stone-100 border-stone-300' : 'bg-stone-900 border-stone-800'
+                } ${img.isPrimary ? 'ring-2 ring-[#C5A059]' : ''}`}
             >
-              <img src={img.url} alt={img.altText || ''} className="w-full h-full object-cover" />
+              <img
+                src={img.url}
+                alt={img.altText || ''}
+                style={{
+                  objectFit: img.transform?.objectFit ?? 'cover',
+                  objectPosition: img.transform ? `${img.transform.positionX}% ${img.transform.positionY}%` : '50% 50%',
+                  transform: img.transform ? `scale(${img.transform.zoom}) rotate(${img.transform.rotation}deg)` : 'none',
+                }}
+                className="w-full h-full"
+              />
 
               {/* Badges & Actions */}
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
-                <div className="flex justify-end">
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setEditingIndex(idx)}
+                    className="p-1.5 bg-[#C5A059] hover:bg-[#B38E46] text-stone-950 rounded-full transition-colors flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2"
+                    title="Adjust Position & Crop"
+                  >
+                    <Crop className="w-3.5 h-3.5" /> Adjust
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => handleRemoveImage(idx)}
@@ -188,11 +216,10 @@ export default function FileUpload({ images, onChange, theme = 'black' }: FileUp
                 <button
                   type="button"
                   onClick={() => handleSetPrimary(idx)}
-                  className={`text-[10px] uppercase font-bold py-1 px-2 tracking-widest transition-colors ${
-                    img.isPrimary
-                      ? 'bg-[#C5A059] text-stone-950'
-                      : 'bg-stone-900/90 text-white hover:bg-[#C5A059] hover:text-stone-950'
-                  }`}
+                  className={`text-[10px] uppercase font-bold py-1 px-2 tracking-widest transition-colors ${img.isPrimary
+                    ? 'bg-[#C5A059] text-stone-950'
+                    : 'bg-stone-900/90 text-white hover:bg-[#C5A059] hover:text-stone-950'
+                    }`}
                 >
                   {img.isPrimary ? 'Primary Image' : 'Set as Primary'}
                 </button>
@@ -206,6 +233,20 @@ export default function FileUpload({ images, onChange, theme = 'black' }: FileUp
             </div>
           ))}
         </div>
+      )}
+
+      {/* Image Editor & Cropper Modal */}
+      {editingIndex !== null && images[editingIndex] && (
+        <ImageEditorModal
+          isOpen={editingIndex !== null}
+          onClose={() => setEditingIndex(null)}
+          imageUrl={images[editingIndex].url}
+          initialTransform={images[editingIndex].transform}
+          defaultAspectRatio="3:4"
+          title={`Adjust & Position Image #${editingIndex + 1}`}
+          onSave={handleSaveTransform}
+          theme={theme}
+        />
       )}
     </div>
   );

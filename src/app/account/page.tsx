@@ -14,29 +14,7 @@ export default function UserAccountPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('hnf_admin_user');
-    if (!storedUser) {
-      router.push('/login');
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(storedUser);
-      setUser(parsed);
-
-      // Fetch customer orders
-      fetch('/api/orders')
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            setOrders(data.data);
-          }
-        })
-        .catch(console.error)
-        .finally(() => setLoading(false));
-    } catch (e) {
-      router.push('/login');
-    }
+    router.replace('/');
   }, [router]);
 
   const handleLogout = () => {

@@ -68,21 +68,21 @@ function ShopContent() {
         {/* Header Title */}
         <div className="text-center max-w-xl mx-auto mb-12">
           <span className="text-[10px] uppercase tracking-[0.3em] text-[#C5A059] font-bold block mb-2">
-            ATELIER CATALOGUE
+            CURATED CATALOGUE
           </span>
           <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900">
             {selectedCategory === 'kurta-sets'
               ? 'Kurta Sets Collection'
               : selectedCategory === 'kurtas'
-              ? 'Designer Kurtas'
+              ? 'Kurtas Collection'
               : isNewArrivals
               ? 'New Arrivals 2026'
               : isFeatured
-              ? 'Festive Atelier Selection'
+              ? 'Festive Collection'
               : 'Shop All Indian Ethnic Wear'}
           </h1>
           <p className="text-xs text-stone-500 mt-2 font-light">
-            Showing {displayedProducts.length} handcrafted luxury pieces.
+            Showing {displayedProducts.length} curated fashion pieces.
           </p>
         </div>
 

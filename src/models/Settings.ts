@@ -17,7 +17,7 @@ const SettingsSchema = new Schema<ISettingsDocument>(
     instagramUrl: { type: String, default: 'https://www.instagram.com/houseofnf.in' },
     storeEmail: { type: String, default: 'thehouseofnf@gmail.com' },
     storePhone: { type: String, default: '+91 96642 09989' },
-    address: { type: String, default: 'Luxury Boutique Street, New Delhi, India' },
+    address: { type: String, default: 'Flagship Atelier: Malviya Nagar, Jaipur - 302017, India' },
     freeShippingThreshold: { type: Number, default: 2999 },
     currencySymbol: { type: String, default: '₹' },
   },

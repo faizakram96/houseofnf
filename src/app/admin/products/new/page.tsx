@@ -45,14 +45,7 @@ export default function NewProductPage() {
       { sku: `HNF-SKU-XL`, size: 'XL', color: 'Gold Ivory', stock: 5, price: 3499 },
       { sku: `HNF-SKU-XXL`, size: 'XXL', color: 'Gold Ivory', stock: 2, price: 3499 },
     ],
-    images: [
-      {
-        url: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=1000',
-        altText: 'Front View',
-        sortOrder: 1,
-        isPrimary: true,
-      },
-    ],
+    images: [],
     flags: {
       isActive: true,
       isFeatured: true,
@@ -112,39 +105,39 @@ export default function NewProductPage() {
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       {/* Action Header */}
-      <div className={`flex items-center justify-between p-6 border ${cardBg}`}>
-        <div className="flex items-center gap-4">
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-6 border ${cardBg}`}>
+        <div className="flex items-center gap-3 sm:gap-4">
           <Link
             href="/admin/products"
-            className={`p-2 border transition-colors ${
+            className={`p-2 border transition-colors flex-shrink-0 ${
               isWhite ? 'bg-stone-100 border-stone-300 text-stone-700 hover:bg-stone-200' : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-white'
             }`}
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <h1 className={`font-serif text-xl font-bold ${isWhite ? 'text-stone-900' : 'text-white'}`}>Create New Product</h1>
+            <h1 className={`font-serif text-lg sm:text-xl font-bold ${isWhite ? 'text-stone-900' : 'text-white'}`}>Create New Product</h1>
             <p className={`text-xs ${isWhite ? 'text-stone-500' : 'text-stone-400'}`}>
               Add a luxury Kurta or Kurta Set to the House of NF catalogue.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 self-stretch sm:self-auto justify-end">
           <button
             type="button"
             onClick={() => setIsPreviewOpen(true)}
-            className={`font-semibold text-xs uppercase tracking-widest px-4 py-2.5 flex items-center gap-2 border transition-colors ${
+            className={`font-semibold text-xs uppercase tracking-widest px-3 sm:px-4 py-2.5 flex items-center justify-center gap-1.5 border transition-colors flex-1 sm:flex-none ${
               isWhite ? 'bg-stone-100 border-stone-300 text-stone-800 hover:bg-stone-200' : 'bg-stone-900 border-stone-700 text-stone-200 hover:bg-stone-800'
             }`}
           >
-            <Eye className="w-4 h-4 text-[#C5A059]" /> Preview Product
+            <Eye className="w-4 h-4 text-[#C5A059]" /> Preview
           </button>
 
           <button
             onClick={handleSaveProduct}
             disabled={isSaving}
-            className="bg-[#C5A059] hover:bg-[#B38E46] text-stone-950 font-bold text-xs uppercase tracking-widest px-6 py-2.5 flex items-center gap-2 shadow-lg"
+            className="bg-[#C5A059] hover:bg-[#B38E46] text-stone-950 font-bold text-xs uppercase tracking-widest px-4 sm:px-6 py-2.5 flex items-center justify-center gap-2 shadow-lg flex-1 sm:flex-none"
           >
             <Save className="w-4 h-4" /> {isSaving ? 'Publishing...' : 'Save Product'}
           </button>
@@ -280,7 +273,7 @@ export default function NewProductPage() {
           <label className={`text-xs uppercase tracking-wider font-semibold block mb-2 ${isWhite ? 'text-stone-700' : 'text-stone-400'}`}>
             Variant Inventory Stock by Size
           </label>
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
             {formData.variants?.map((variant, idx) => (
               <div
                 key={variant.size}

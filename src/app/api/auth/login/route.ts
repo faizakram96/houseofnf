@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
     const rawIdentifier = (body.identifier || body.email || body.phone || '').toString().trim();
     const password = (body.password || '').toString().trim();
     const rememberMe = body.rememberMe === true;
+    const requestedRole = (body.role || 'customer').toString().trim();
 
     if (!rawIdentifier || !password) {
       return NextResponse.json({ success: false, error: 'Please enter your Email or Mobile Number and Password.' }, { status: 400 });
@@ -45,6 +46,14 @@ export async function POST(request: NextRequest) {
       identifier === 'user' ||
       identifier === '9999999999' ||
       rawIdentifier === '9999999999';
+
+    // Role Enforcement: If Admin Login requested, reject non-admin identifiers
+    if (requestedRole === 'admin' && !isAdminIdentifier && !identifier.includes('admin')) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid Admin Portal credentials. Access restricted to authorized personnel.' },
+        { status: 403 }
+      );
+    }
 
     let user: any = null;
     let isPasswordValid = false;

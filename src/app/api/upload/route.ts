@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,6 +11,7 @@ export async function POST(request: NextRequest) {
     }
 
     const uploadedUrls: string[] = [];
+    let usedProvider = 'base64';
 
     for (const file of files) {
       // Validate image type
@@ -25,15 +27,24 @@ export async function POST(request: NextRequest) {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      // Convert to Base64 Data URL for instant rendering & persistent database storage without external dependencies
-      const base64Image = `data:${file.type};base64,${buffer.toString('base64')}`;
-      uploadedUrls.push(base64Image);
+      // Attempt upload to Cloudinary CDN
+      const cloudRes = await uploadToCloudinary(buffer, 'house-of-nf/products');
+
+      if (cloudRes.success && cloudRes.url) {
+        uploadedUrls.push(cloudRes.url);
+        usedProvider = 'cloudinary';
+      } else {
+        // Fallback to persistent Base64 Data URL if Cloudinary credentials are unconfigured or invalid
+        const base64Image = `data:${file.type};base64,${buffer.toString('base64')}`;
+        uploadedUrls.push(base64Image);
+      }
     }
 
     return NextResponse.json({
       success: true,
       urls: uploadedUrls,
-      message: `${uploadedUrls.length} image(s) uploaded successfully!`,
+      provider: usedProvider,
+      message: `${uploadedUrls.length} image(s) uploaded successfully using ${usedProvider === 'cloudinary' ? 'Cloudinary CDN' : 'Local Base64 Fallback'}!`,
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

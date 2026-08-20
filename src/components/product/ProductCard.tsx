@@ -2,21 +2,17 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Heart, Eye, ShoppingBag, MessageCircle } from 'lucide-react';
+import { Eye, ShoppingBag, MessageCircle } from 'lucide-react';
 import { Product } from '@/types';
-import { useWishlist } from '@/context/WishlistContext';
 import { useCart } from '@/context/CartContext';
 import { getWhatsAppUrl } from '@/lib/whatsapp';
 import QuickViewModal from '@/components/product/QuickViewModal';
 import { formatPrice } from '@/lib/utils';
 
 export default function ProductCard({ product }: { product: Product }) {
-  const { toggleWishlist, isInWishlist } = useWishlist();
   const { addToCart } = useCart();
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const [selectedSize, setSelectedSize] = useState<'S' | 'M' | 'L' | 'XL' | 'XXL'>('M');
-
-  const isFavorite = isInWishlist(product.id || product._id || '');
 
   const primaryImage =
     product.images.find((img) => img.isPrimary)?.url ||
@@ -66,15 +62,6 @@ export default function ProductCard({ product }: { product: Product }) {
               </span>
             )}
           </div>
-
-          {/* Wishlist Button */}
-          <button
-            onClick={() => toggleWishlist(product)}
-            className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur-md rounded-full text-stone-700 hover:text-[#C5A059] transition-all duration-300 hover:scale-110 shadow-sm z-10"
-            aria-label="Save to Wishlist"
-          >
-            <Heart className={`w-4 h-4 ${isFavorite ? 'fill-[#C5A059] text-[#C5A059]' : ''}`} />
-          </button>
 
           {/* Quick Actions Bar on Hover */}
           <div className="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-black/70 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 z-10">

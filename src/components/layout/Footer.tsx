@@ -16,52 +16,6 @@ export default function Footer() {
   return (
     <footer className="bg-[#141312] text-[#F3EBDD] py-10 sm:py-14 border-t border-stone-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Top Instagram Editorial Showcase */}
-        <div className="mb-10 pb-8 border-b border-stone-800/80">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
-            <div>
-              <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.3em] text-[#C5A059] font-bold block mb-0.5">
-                @HOUSEOFNF ON INSTAGRAM
-              </span>
-              <h3 className="font-serif text-lg sm:text-2xl font-semibold text-white">Follow Our Atelier Journey</h3>
-            </div>
-            <a
-              href={instagramUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 bg-[#C5A059] hover:bg-[#B38E46] text-stone-950 font-bold text-[10px] sm:text-xs uppercase tracking-widest px-4 py-2 transition-colors shadow-md"
-            >
-              <InstagramIcon className="w-3.5 h-3.5" />
-              DM on Instagram
-            </a>
-          </div>
-
-          <div className="grid grid-cols-4 gap-2 sm:gap-4">
-            {[
-              'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=400',
-              'https://images.unsplash.com/photo-1583391733956-6c78276477e2?q=80&w=400',
-              'https://images.unsplash.com/photo-1609357605129-26f69add5d6e?q=80&w=400',
-              'https://images.unsplash.com/photo-1563178406-4cdc2923acbc?q=80&w=400',
-            ].map((imgUrl, i) => (
-              <a
-                key={i}
-                href={instagramUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="group relative aspect-square overflow-hidden bg-stone-900 block"
-              >
-                <img
-                  src={imgUrl}
-                  alt="House of NF Instagram Feed"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-85 group-hover:opacity-100"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <InstagramIcon className="w-5 h-5 text-white" />
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
 
         {/* Core Footer Navigation & Brand Details */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 mb-8 text-left">
@@ -76,7 +30,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-[11px] sm:text-xs text-stone-400 leading-relaxed font-light max-w-sm">
-              Timeless Indian Elegance, Reimagined. Hand-embroidered Chanderi silks and bespoke ethnic silhouettes for the modern woman.
+              A thoughtfully curated fashion destination for the modern woman. Discover stylish, quality Kurta Sets and ethnic fashion.
             </p>
             <div className="flex items-center gap-2.5 pt-1">
               <a
@@ -149,7 +103,7 @@ export default function Footer() {
             <ul className="space-y-1.5 sm:space-y-2 text-[11px] sm:text-xs text-stone-400 font-light">
               <li>
                 <Link href="/about" className="hover:text-white transition-colors">
-                  The Atelier Story
+                  About House of NF
                 </Link>
               </li>
               <li>
@@ -161,11 +115,6 @@ export default function Footer() {
                 <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
                   Size Consultation
                 </a>
-              </li>
-              <li>
-                <Link href="/admin/login" className="hover:text-[#C5A059] transition-colors">
-                  Admin Portal Login
-                </Link>
               </li>
             </ul>
           </div>

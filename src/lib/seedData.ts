@@ -365,7 +365,22 @@ export const INITIAL_SETTINGS: SiteSettings = {
   instagramUrl: process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://www.instagram.com/houseofnf.in',
   storeEmail: 'thehouseofnf@gmail.com',
   storePhone: '+91 96642 09989',
-  address: 'House of NF Flagship Atelier, Designer Lane, New Delhi - 110001',
+  address: 'Flagship Atelier: Malviya Nagar, Jaipur - 302017, India',
   freeShippingThreshold: 2999,
   currencySymbol: '₹',
+};
+
+export const INITIAL_HERO = {
+  badgeText: "CURATED WOMEN'S WEAR • FESTIVE 2026",
+  headingLine1: 'Timeless Indian',
+  headingHighlight: 'Elegance.',
+  subtitle: 'CURATED ELEGANCE FOR THE MODERN WOMAN',
+  description:
+    'Discover our thoughtfully curated collection of Kurta Sets, Kurtas, and elegant ethnic wear. Designed with attention to style, quality, comfort, and modern trends.',
+  cta1Text: 'Shop Kurta Sets',
+  cta1Link: '/shop?category=kurta-sets',
+  cta2Text: 'Explore Kurtas',
+  cta2Link: '/shop?category=kurtas',
+  backgroundImage: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=2000&auto=format&fit=crop',
+  isActive: true,
 };

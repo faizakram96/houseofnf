@@ -18,6 +18,7 @@ import {
   Moon,
   Menu,
   X,
+  Sparkles,
 } from 'lucide-react';
 import { AdminThemeProvider, useAdminTheme } from '@/context/AdminThemeContext';
 
@@ -28,15 +29,35 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   const { theme, setTheme } = useAdminTheme();
   const [adminUser, setAdminUser] = useState<any>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   useEffect(() => {
-    if (isLoginPage) return;
-    const stored = localStorage.getItem('hnf_admin_user');
-    if (!stored) {
-      router.push('/admin/login');
-    } else {
-      setAdminUser(JSON.parse(stored));
+    if (isLoginPage) {
+      setIsCheckingAuth(false);
+      return;
+    }
+
+    try {
+      const stored = localStorage.getItem('hnf_admin_user');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && (parsed.role === 'admin' || parsed.role === 'staff')) {
+          setAdminUser(parsed);
+          setIsCheckingAuth(false);
+          return;
+        }
+      }
+      // If no valid session exists, clear and redirect to Admin Login
+      localStorage.removeItem('hnf_admin_user');
+      setAdminUser(null);
+      setIsCheckingAuth(false);
+      router.replace('/admin/login');
+    } catch (e) {
+      localStorage.removeItem('hnf_admin_user');
+      setAdminUser(null);
+      setIsCheckingAuth(false);
+      router.replace('/admin/login');
     }
   }, [pathname, isLoginPage, router]);
 
@@ -49,6 +70,21 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
+  // Display security check gate while verifying admin authorization
+  if (isCheckingAuth || !adminUser) {
+    return (
+      <div className="min-h-screen bg-[#141312] text-[#F3EBDD] flex flex-col items-center justify-center p-4">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-2 border-[#C5A059] border-t-transparent rounded-full animate-spin mx-auto" />
+          <span className="text-xs uppercase tracking-[0.25em] text-[#C5A059] font-semibold block">
+            Verifying Admin Authorization
+          </span>
+          <p className="text-[10px] text-stone-400">Restricted Management Portal • House of NF</p>
+        </div>
+      </div>
+    );
+  }
+
   const isWhite = theme === 'white';
 
   const navItems = [
@@ -57,13 +93,15 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     { name: 'Category Management', href: '/admin/categories', icon: FolderTree },
     { name: 'Inventory & Variants', href: '/admin/inventory', icon: Boxes },
     { name: 'Orders Management', href: '/admin/orders', icon: ClipboardList },
+    { name: 'Hero Banner Settings', href: '/admin/hero', icon: Sparkles },
     { name: 'Media Library', href: '/admin/media', icon: ImageIcon },
     { name: 'Store Settings', href: '/admin/settings', icon: Settings },
   ];
 
   const handleLogout = () => {
     localStorage.removeItem('hnf_admin_user');
-    router.push('/admin/login');
+    setAdminUser(null);
+    router.replace('/admin/login');
   };
 
   return (

@@ -1,3 +1,13 @@
+export interface ImageTransformSettings {
+  positionX: number; // 0% to 100%, default 50%
+  positionY: number; // 0% to 100%, default 50%
+  zoom: number; // 1.0x to 3.0x, default 1.0x
+  rotation: number; // 0, 90, 180, 270 degrees
+  objectFit: 'cover' | 'contain' | 'fill' | 'custom';
+  aspectRatio: '16:9' | '4:3' | '1:1' | '3:4' | 'free';
+  croppedImageUrl?: string;
+}
+
 export interface ProductVariant {
   sku: string;
   size: 'S' | 'M' | 'L' | 'XL' | 'XXL';
@@ -11,6 +21,7 @@ export interface ProductImage {
   altText: string;
   sortOrder: number;
   isPrimary: boolean;
+  transform?: ImageTransformSettings;
 }
 
 export interface ProductAttributes {
@@ -176,4 +187,20 @@ export interface SiteSettings {
   address: string;
   freeShippingThreshold: number;
   currencySymbol: string;
+}
+
+export interface HeroBannerConfig {
+  badgeText: string;
+  headingLine1: string;
+  headingHighlight: string;
+  subtitle: string;
+  description: string;
+  cta1Text: string;
+  cta1Link: string;
+  cta2Text: string;
+  cta2Link: string;
+  backgroundImage: string;
+  transform?: ImageTransformSettings;
+  isActive: boolean;
+  updatedAt?: string;
 }

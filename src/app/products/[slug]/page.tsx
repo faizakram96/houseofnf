@@ -3,11 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Heart, ShoppingBag, MessageCircle, ShieldCheck, Truck, RefreshCw, Ruler, Check, ChevronRight } from 'lucide-react';
+import { ShoppingBag, MessageCircle, ShieldCheck, Truck, RefreshCw, Ruler, Check, ChevronRight } from 'lucide-react';
 import InstagramIcon from '@/components/ui/InstagramIcon';
 import { Product } from '@/types';
 import { useCart } from '@/context/CartContext';
-import { useWishlist } from '@/context/WishlistContext';
 import { getWhatsAppUrl } from '@/lib/whatsapp';
 import { formatPrice } from '@/lib/utils';
 
@@ -25,7 +24,6 @@ export default function ProductDetailPage() {
   const [activeTab, setActiveTab] = useState<'description' | 'details' | 'care'>('description');
 
   const { addToCart } = useCart();
-  const { toggleWishlist, isInWishlist } = useWishlist();
 
   useEffect(() => {
     async function fetchProduct() {
@@ -58,7 +56,6 @@ export default function ProductDetailPage() {
 
   if (!product) return null;
 
-  const isFavorite = isInWishlist(product.id || product._id || '');
   const selectedVariant = product.variants.find((v) => v.size === selectedSize);
   const currentStock = selectedVariant ? selectedVariant.stock : 10;
 
@@ -113,13 +110,6 @@ export default function ProductDetailPage() {
                 alt={product.name}
                 className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
               />
-
-              <button
-                onClick={() => toggleWishlist(product)}
-                className="absolute top-4 right-4 p-3 bg-white/90 backdrop-blur-md rounded-full text-stone-700 hover:text-[#C5A059] transition-all shadow-md z-10"
-              >
-                <Heart className={`w-5 h-5 ${isFavorite ? 'fill-[#C5A059] text-[#C5A059]' : ''}`} />
-              </button>
             </div>
           </div>
 

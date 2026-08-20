@@ -4,54 +4,53 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Sparkles, ShieldCheck, Truck, RefreshCw, Award, Compass, ChevronDown } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
-import InstagramFeed from '@/components/home/InstagramFeed';
-import { Product } from '@/types';
+import { Product, HeroBannerConfig } from '@/types';
 
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<'all' | 'kurta-sets' | 'kurtas'>('all');
-  const [currentImageIdx, setCurrentImageIdx] = useState(0);
 
-  // High-fashion women's ethnic wear editorial hero images
-  const heroImages = [
-    {
-      url: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=2000&auto=format&fit=crop',
-      title: 'Royal Chanderi Silk Set',
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1583391733956-6c78276477e2?q=80&w=2000&auto=format&fit=crop',
-      title: 'Lucknowi Chikankari Kurta',
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1609357605129-26f69add5d6e?q=80&w=2000&auto=format&fit=crop',
-      title: 'Heritage Velvet Brocade',
-    },
-  ];
-
-  // Auto-advance background imagery gently
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentImageIdx((prev) => (prev + 1) % heroImages.length);
-    }, 7000);
-    return () => clearInterval(timer);
-  }, [heroImages.length]);
+  // Hero Banner Dynamic Config State (with default fallback)
+  const [heroConfig, setHeroConfig] = useState<HeroBannerConfig>({
+    badgeText: "CURATED WOMEN'S WEAR • FESTIVE 2026",
+    headingLine1: 'Timeless Indian',
+    headingHighlight: 'Elegance.',
+    subtitle: 'CURATED ELEGANCE FOR THE MODERN WOMAN',
+    description:
+      'Discover our thoughtfully curated collection of Kurta Sets, Kurtas, and elegant ethnic wear. Designed with attention to style, quality, comfort, and modern trends.',
+    cta1Text: 'Shop Kurta Sets',
+    cta1Link: '/shop?category=kurta-sets',
+    cta2Text: 'Explore Kurtas',
+    cta2Link: '/shop?category=kurtas',
+    backgroundImage: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=2000&auto=format&fit=crop',
+    isActive: true,
+  });
 
   useEffect(() => {
-    async function fetchProducts() {
+    async function loadHeroAndProducts() {
       try {
-        const res = await fetch('/api/products?limit=8');
-        const data = await res.json();
-        if (data.success) {
-          setProducts(data.data);
+        const [heroRes, prodRes] = await Promise.all([
+          fetch('/api/hero'),
+          fetch('/api/products?limit=8'),
+        ]);
+
+        const heroJson = await heroRes.json();
+        if (heroJson.success && heroJson.data) {
+          setHeroConfig(heroJson.data);
+        }
+
+        const prodJson = await prodRes.json();
+        if (prodJson.success) {
+          setProducts(prodJson.data);
         }
       } catch (err) {
-        console.error('Failed to load home products:', err);
+        console.error('Failed to load home page data:', err);
       } finally {
         setLoading(false);
       }
     }
-    fetchProducts();
+    loadHeroAndProducts();
   }, []);
 
   const filteredProducts =
@@ -61,85 +60,107 @@ export default function HomePage() {
           activeCategory === 'kurta-sets' ? p.categoryId === 'cat-kurta-sets' : p.categoryId === 'cat-kurtas'
         );
 
+  const defaultFallbackImage =
+    'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=2000&auto=format&fit=crop';
+  const heroBgImage = heroConfig.backgroundImage || defaultFallbackImage;
+
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-stone-900">
-      {/* --- TIMELESS INDIAN ELEGANCE (MINIMAL CINEMATIC HERO SECTION) --- */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-[#141312] text-[#F3EBDD] py-20">
-        {/* Ambient Background Ken Burns Imagery */}
-        <div className="absolute inset-0 z-0 opacity-40 overflow-hidden">
-          {heroImages.map((img, idx) => (
+      {/* --- TIMELESS INDIAN ELEGANCE (DYNAMIC ADMIN-MANAGED HERO SECTION) --- */}
+      {heroConfig.isActive && (
+        <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-[#141312] text-[#F3EBDD] py-20">
+          {/* Ambient Dynamic Background Image */}
+          <div className="absolute inset-0 z-0 opacity-45 overflow-hidden">
             <img
-              key={idx}
-              src={img.url}
-              alt=""
-              className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-1000 ${
-                idx === currentImageIdx ? 'opacity-100 scale-105 animate-kenburns' : 'opacity-0 scale-100'
-              }`}
+              src={heroBgImage}
+              alt="House of NF Atelier Hero"
+              style={{
+                objectFit: heroConfig.transform?.objectFit ?? 'cover',
+                objectPosition: heroConfig.transform
+                  ? `${heroConfig.transform.positionX}% ${heroConfig.transform.positionY}%`
+                  : '50% 50%',
+                transform: heroConfig.transform
+                  ? `scale(${heroConfig.transform.zoom}) rotate(${heroConfig.transform.rotation}deg)`
+                  : 'scale(1.05)',
+              }}
+              className="absolute inset-0 w-full h-full transition-all duration-700"
             />
-          ))}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#141312] via-[#141312]/60 to-[#141312]/30" />
-          <div className="absolute inset-0 bg-black/20" />
-        </div>
-
-        {/* Centered Minimal Brand Hero Content */}
-        <div className="relative z-10 max-w-3xl mx-auto px-6 text-center space-y-7 animate-fade-in-up">
-          {/* Atelier Badge */}
-          <div className="inline-flex items-center gap-2 bg-[#C5A059]/15 border border-[#C5A059]/40 text-[#C5A059] px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.3em] shadow-lg backdrop-blur-sm">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>HERITAGE WOMEN'S ATELIER • FESTIVE 2026</span>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#141312] via-[#141312]/60 to-[#141312]/30" />
+            <div className="absolute inset-0 bg-black/30" />
           </div>
 
-          {/* Headline */}
-          <div className="space-y-3">
-            <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.08]">
-              Timeless Indian <br />
-              <span className="gold-gradient-text font-serif italic font-normal">Elegance.</span>
-            </h1>
-            <p className="text-xs sm:text-sm tracking-[0.25em] text-amber-200/90 font-light uppercase">
-              Handcrafted Couture for the Modern Woman
-            </p>
-          </div>
+          {/* Centered Dynamic Brand Hero Content */}
+          <div className="relative z-10 max-w-3xl mx-auto px-6 text-center space-y-7 animate-fade-in-up">
+            {/* Atelier Badge */}
+            {heroConfig.badgeText && (
+              <div className="inline-flex items-center gap-2 bg-[#C5A059]/15 border border-[#C5A059]/40 text-[#C5A059] px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] shadow-lg backdrop-blur-sm">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{heroConfig.badgeText}</span>
+              </div>
+            )}
 
-          {/* Subtitle */}
-          <p className="text-sm sm:text-base text-stone-300 font-light leading-relaxed max-w-xl mx-auto">
-            Discover the art of pure Chanderi Silk Kurta Sets, Zardosi hand embroidery, and Lucknowi Chikankari motifs. Tailored to perfection for royal celebrations and timeless occasions.
-          </p>
-
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-            <Link
-              href="/shop?category=kurta-sets"
-              className="bg-[#C5A059] hover:bg-[#B38E46] text-stone-950 font-bold text-xs uppercase tracking-[0.2em] px-9 py-4 text-center transition-all duration-300 shadow-xl shadow-[#C5A059]/20 flex items-center justify-center gap-2 group w-full sm:w-auto"
-            >
-              <span>Shop Kurta Sets</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-
-            <Link
-              href="/shop?category=kurtas"
-              className="border border-[#F3EBDD]/40 hover:border-[#C5A059] text-white hover:text-[#C5A059] font-semibold text-xs uppercase tracking-[0.2em] px-9 py-4 text-center transition-all duration-300 backdrop-blur-sm flex items-center justify-center gap-2 w-full sm:w-auto"
-            >
-              <span>Explore Kurtas</span>
-            </Link>
-          </div>
-
-          {/* Trust Highlights */}
-          <div className="pt-6 border-t border-stone-800/80 flex items-center justify-center gap-8 text-[11px] font-medium tracking-wider text-stone-400">
-            <div className="flex items-center gap-2">
-              <Award className="w-4 h-4 text-[#C5A059]" />
-              <span>Pure Chanderi Silk</span>
+            {/* Headline */}
+            <div className="space-y-3">
+              <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.08]">
+                {heroConfig.headingLine1 || 'Timeless Indian'} <br />
+                <span className="gold-gradient-text font-serif italic font-normal">
+                  {heroConfig.headingHighlight || 'Elegance.'}
+                </span>
+              </h1>
+              {heroConfig.subtitle && (
+                <p className="text-xs sm:text-sm tracking-[0.25em] text-amber-200/90 font-light uppercase">
+                  {heroConfig.subtitle}
+                </p>
+              )}
             </div>
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#C5A059]" />
-              <span>Zardosi Handwork</span>
+
+            {/* Subtitle / Description */}
+            {heroConfig.description && (
+              <p className="text-sm sm:text-base text-stone-300 font-light leading-relaxed max-w-xl mx-auto">
+                {heroConfig.description}
+              </p>
+            )}
+
+            {/* Dynamic CTAs */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+              {heroConfig.cta1Text && (
+                <Link
+                  href={heroConfig.cta1Link || '/shop'}
+                  className="bg-[#C5A059] hover:bg-[#B38E46] text-stone-950 font-bold text-xs uppercase tracking-[0.2em] px-9 py-4 text-center transition-all duration-300 shadow-xl shadow-[#C5A059]/20 flex items-center justify-center gap-2 group w-full sm:w-auto"
+                >
+                  <span>{heroConfig.cta1Text}</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              )}
+
+              {heroConfig.cta2Text && (
+                <Link
+                  href={heroConfig.cta2Link || '/shop'}
+                  className="border border-[#F3EBDD]/40 hover:border-[#C5A059] text-white hover:text-[#C5A059] font-semibold text-xs uppercase tracking-[0.2em] px-9 py-4 text-center transition-all duration-300 backdrop-blur-sm flex items-center justify-center gap-2 w-full sm:w-auto"
+                >
+                  <span>{heroConfig.cta2Text}</span>
+                </Link>
+              )}
             </div>
-            <div className="flex items-center gap-2">
-              <Compass className="w-4 h-4 text-[#C5A059]" />
-              <span>Artisan Crafted</span>
+
+            {/* Trust Highlights */}
+            <div className="pt-6 border-t border-stone-800/80 flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-[11px] font-medium tracking-wider text-stone-400">
+              <div className="flex items-center gap-2">
+                <Award className="w-4 h-4 text-[#C5A059]" />
+                <span>Quality & Comfort</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#C5A059]" />
+                <span>Thoughtfully Curated</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Compass className="w-4 h-4 text-[#C5A059]" />
+                <span>Modern Indian Style</span>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* --- FEATURE HIGHLIGHTS BAR --- */}
       <section className="bg-white border-b border-stone-200 py-8">
@@ -162,9 +183,9 @@ export default function HomePage() {
             </div>
             <div>
               <h3 className="font-serif text-sm font-semibold text-stone-900 uppercase tracking-wider">
-                100% Authentic Handcraft
+                Thoughtfully Curated
               </h3>
-              <p className="text-xs text-stone-500 font-light mt-0.5">Crafted by master Indian artisans</p>
+              <p className="text-xs text-stone-500 font-light mt-0.5">Selected with style, quality & comfort in mind</p>
             </div>
           </div>
 
@@ -192,7 +213,7 @@ export default function HomePage() {
             Curated Festive Collection
           </h2>
           <p className="text-xs sm:text-sm text-stone-600 font-light leading-relaxed">
-            Handcrafted Kurta Sets & Kurtas tailored for royal celebrations, festive family gatherings, and everyday elegance.
+            Curated Kurta Sets & Kurtas selected for festive celebrations, family gatherings, and everyday elegance.
           </p>
 
           {/* Category Filter Pills */}
@@ -261,9 +282,6 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
-
-      {/* --- INSTAGRAM FEED SECTION ("FOLLOW OUR STYLE") --- */}
-      <InstagramFeed />
     </div>
   );
 }

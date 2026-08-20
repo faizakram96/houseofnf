@@ -2,10 +2,9 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { X, ShoppingBag, MessageCircle, Heart, Check, ShieldCheck } from 'lucide-react';
+import { X, ShoppingBag, MessageCircle, Check, ShieldCheck } from 'lucide-react';
 import { Product } from '@/types';
 import { useCart } from '@/context/CartContext';
-import { useWishlist } from '@/context/WishlistContext';
 import { getWhatsAppUrl } from '@/lib/whatsapp';
 import { formatPrice } from '@/lib/utils';
 
@@ -19,13 +18,11 @@ export default function QuickViewModal({
   onClose: () => void;
 }) {
   const { addToCart } = useCart();
-  const { toggleWishlist, isInWishlist } = useWishlist();
   const [selectedSize, setSelectedSize] = useState<'S' | 'M' | 'L' | 'XL' | 'XXL'>('M');
   const [activeImgIndex, setActiveImgIndex] = useState(0);
 
   if (!isOpen) return null;
 
-  const isFavorite = isInWishlist(product.id || product._id || '');
   const activeImage = product.images[activeImgIndex]?.url || product.images[0]?.url;
 
   const whatsappUrl = getWhatsAppUrl({

@@ -4,13 +4,15 @@ import CategoryModel from '@/models/Category';
 import OrderModel from '@/models/Order';
 import InventoryModel from '@/models/Inventory';
 import SettingsModel from '@/models/Settings';
-import { Product, Category, Order, SiteSettings } from '@/types';
-import { INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_SETTINGS } from '@/lib/seedData';
+import HeroBannerModel from '@/models/HeroBanner';
+import { Product, Category, Order, SiteSettings, HeroBannerConfig } from '@/types';
+import { INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_SETTINGS, INITIAL_HERO } from '@/lib/seedData';
 import { slugify, generateOrderNumber } from '@/lib/utils';
 
 // In-memory store fallback when MongoDB is not connected
 let memoryProducts: Product[] = [...INITIAL_PRODUCTS];
 let memoryCategories: Category[] = [...INITIAL_CATEGORIES];
+let memoryHero: HeroBannerConfig = { ...INITIAL_HERO };
 let memoryOrders: Order[] = [
   {
     id: 'ord-1001',
@@ -449,6 +451,71 @@ export async function getSettings(): Promise<SiteSettings> {
 export async function updateSettings(updates: Partial<SiteSettings>): Promise<SiteSettings> {
   memorySettings = { ...memorySettings, ...updates };
   return memorySettings;
+}
+
+// --- HERO BANNER SERVICES ---
+export async function getHeroBanner(): Promise<HeroBannerConfig> {
+  try {
+    const conn = await connectToDatabase();
+    if (conn) {
+      const doc: any = await HeroBannerModel.findOne({}).sort({ updatedAt: -1 }).lean();
+      if (doc) {
+        const isOldText =
+          doc.badgeText?.includes('HERITAGE') ||
+          doc.subtitle?.includes('Handcrafted') ||
+          doc.description?.includes('Zardosi');
+        return {
+          badgeText: isOldText ? INITIAL_HERO.badgeText : doc.badgeText || INITIAL_HERO.badgeText,
+          headingLine1: doc.headingLine1 || INITIAL_HERO.headingLine1,
+          headingHighlight: doc.headingHighlight || INITIAL_HERO.headingHighlight,
+          subtitle: isOldText ? INITIAL_HERO.subtitle : doc.subtitle || INITIAL_HERO.subtitle,
+          description: isOldText ? INITIAL_HERO.description : doc.description || INITIAL_HERO.description,
+          cta1Text: doc.cta1Text || INITIAL_HERO.cta1Text,
+          cta1Link: doc.cta1Link || INITIAL_HERO.cta1Link,
+          cta2Text: doc.cta2Text || INITIAL_HERO.cta2Text,
+          cta2Link: doc.cta2Link || INITIAL_HERO.cta2Link,
+          backgroundImage: doc.backgroundImage || INITIAL_HERO.backgroundImage,
+          isActive: typeof doc.isActive === 'boolean' ? doc.isActive : true,
+          updatedAt: doc.updatedAt?.toISOString(),
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('Hero banner fetch error, using memory fallback:', err);
+  }
+  return memoryHero;
+}
+
+export async function updateHeroBanner(updates: Partial<HeroBannerConfig>): Promise<HeroBannerConfig> {
+  memoryHero = { ...memoryHero, ...updates };
+  try {
+    const conn = await connectToDatabase();
+    if (conn) {
+      const updated: any = await HeroBannerModel.findOneAndUpdate({}, memoryHero, {
+        new: true,
+        upsert: true,
+      }).lean();
+      if (updated) {
+        return {
+          badgeText: updated.badgeText,
+          headingLine1: updated.headingLine1,
+          headingHighlight: updated.headingHighlight,
+          subtitle: updated.subtitle,
+          description: updated.description,
+          cta1Text: updated.cta1Text,
+          cta1Link: updated.cta1Link,
+          cta2Text: updated.cta2Text,
+          cta2Link: updated.cta2Link,
+          backgroundImage: updated.backgroundImage,
+          isActive: updated.isActive,
+          updatedAt: updated.updatedAt?.toISOString(),
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('Hero banner DB update error:', err);
+  }
+  return memoryHero;
 }
 
 // --- SEED SEEDER SERVICE ---

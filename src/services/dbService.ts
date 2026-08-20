@@ -57,6 +57,22 @@ let memoryOrders: Order[] = [
 ];
 let memorySettings: SiteSettings = { ...INITIAL_SETTINGS };
 
+// Persistent Set of deleted product identifiers to guarantee deleted products never reappear
+const deletedProductIdentifiers = new Set<string>();
+
+const markProductAsDeleted = (id?: string, slug?: string, sku?: string) => {
+  if (id) deletedProductIdentifiers.add(id.trim().toLowerCase());
+  if (slug) deletedProductIdentifiers.add(slug.trim().toLowerCase());
+  if (sku) deletedProductIdentifiers.add(sku.trim().toLowerCase());
+};
+
+const isProductDeleted = (id?: string, slug?: string, sku?: string): boolean => {
+  if (id && deletedProductIdentifiers.has(id.trim().toLowerCase())) return true;
+  if (slug && deletedProductIdentifiers.has(slug.trim().toLowerCase())) return true;
+  if (sku && deletedProductIdentifiers.has(sku.trim().toLowerCase())) return true;
+  return false;
+};
+
 // --- PRODUCT SERVICES ---
 export async function getProducts(options?: {
   categorySlug?: string;
@@ -98,31 +114,35 @@ export async function getProducts(options?: {
         .limit(options?.limit || 50)
         .lean();
 
-      const products = docs.map((doc: any) => ({
-        id: doc._id.toString(),
-        name: doc.name,
-        slug: doc.slug,
-        sku: doc.sku,
-        categoryId: doc.categoryId,
-        description: doc.description,
-        shortDescription: doc.shortDescription,
-        pricing: doc.pricing,
-        variants: doc.variants,
-        images: doc.images,
-        attributes: doc.attributes,
-        flags: doc.flags,
-        seo: doc.seo,
-        createdAt: doc.createdAt?.toISOString(),
-      }));
+      const products = docs
+        .map((doc: any) => ({
+          id: doc._id.toString(),
+          name: doc.name,
+          slug: doc.slug,
+          sku: doc.sku,
+          categoryId: doc.categoryId,
+          description: doc.description,
+          shortDescription: doc.shortDescription,
+          pricing: doc.pricing,
+          variants: doc.variants,
+          images: doc.images,
+          attributes: doc.attributes,
+          flags: doc.flags,
+          seo: doc.seo,
+          createdAt: doc.createdAt?.toISOString(),
+        }))
+        .filter((p) => !isProductDeleted(p.id, p.slug, p.sku));
 
-      return { products, total };
+      return { products, total: products.length };
     }
   } catch (err) {
     console.warn('Using memory products fallback:', err);
   }
 
   // Fallback memory implementation
-  let filtered = [...memoryProducts].filter((p) => p.flags.isActive);
+  let filtered = [...memoryProducts].filter(
+    (p) => p.flags.isActive && !isProductDeleted(p.id, p.slug, p.sku) && !isProductDeleted((p as any)._id)
+  );
 
   if (options?.categorySlug) {
     const cat = memoryCategories.find((c) => c.slug === options.categorySlug);
@@ -156,11 +176,15 @@ export async function getProducts(options?: {
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
+  if (isProductDeleted(undefined, slug)) return null;
+
   try {
     const conn = await connectToDatabase();
     if (conn) {
       const doc: any = await ProductModel.findOne({ slug }).lean();
       if (doc) {
+        if (isProductDeleted(doc._id.toString(), doc.slug, doc.sku)) return null;
+
         return {
           id: doc._id.toString(),
           name: doc.name,
@@ -183,15 +207,31 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     console.warn('Memory product slug fallback:', err);
   }
 
-  return memoryProducts.find((p) => p.slug === slug) || null;
+  const found = memoryProducts.find((p) => p.slug === slug);
+  if (found && !isProductDeleted(found.id, found.slug, found.sku)) {
+    return found;
+  }
+  return null;
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
+  if (isProductDeleted(id)) return null;
+
   try {
     const conn = await connectToDatabase();
     if (conn) {
-      const doc: any = await ProductModel.findById(id).lean();
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+      let doc: any = null;
+      if (isObjectId) {
+        doc = await ProductModel.findById(id).lean();
+      }
+      if (!doc) {
+        doc = await ProductModel.findOne({ $or: [{ slug: id }, { sku: id }, { id }] }).lean();
+      }
+
       if (doc) {
+        if (isProductDeleted(doc._id.toString(), doc.slug, doc.sku)) return null;
+
         return {
           id: doc._id.toString(),
           name: doc.name,
@@ -213,7 +253,11 @@ export async function getProductById(id: string): Promise<Product | null> {
     console.warn('Memory product id fallback:', err);
   }
 
-  return memoryProducts.find((p) => p.id === id || p._id === id) || null;
+  const found = memoryProducts.find((p) => p.id === id || (p as any)._id === id);
+  if (found && !isProductDeleted(found.id, found.slug, found.sku)) {
+    return found;
+  }
+  return null;
 }
 
 export async function createProduct(productData: Partial<Product>): Promise<Product> {
@@ -325,33 +369,58 @@ export async function updateProduct(id: string, updates: Partial<Product>): Prom
 }
 
 export async function deleteProduct(id: string): Promise<boolean> {
-  let deletedFromDb = false;
+  if (!id) return false;
+  const cleanId = id.trim();
+  let dbSuccess = false;
+  let targetSlug = '';
+  let targetSku = '';
+
   try {
     const conn = await connectToDatabase();
     if (conn) {
-      const isObjectId = /^[0-9a-fA-F]{24}$/.test(id);
-      let res: any = null;
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(cleanId);
+      let doc: any = null;
       if (isObjectId) {
-        res = await ProductModel.findByIdAndDelete(id);
+        doc = await ProductModel.findById(cleanId);
       }
-      if (!res) {
-        res = await ProductModel.findOneAndDelete({ $or: [{ slug: id }, { sku: id }, { id: id }] });
+      if (!doc) {
+        doc = await ProductModel.findOne({ $or: [{ slug: cleanId }, { sku: cleanId }, { id: cleanId }] });
       }
-      if (res) {
-        deletedFromDb = true;
+
+      if (doc) {
+        targetSlug = doc.slug || '';
+        targetSku = doc.sku || '';
+        const docMongoId = doc._id.toString();
+
+        const deleteRes = await ProductModel.deleteMany({
+          $or: [{ _id: doc._id }, { slug: doc.slug }, { sku: doc.sku }, { id: cleanId }],
+        });
+
+        if (deleteRes.deletedCount > 0) {
+          dbSuccess = true;
+          markProductAsDeleted(docMongoId, doc.slug, doc.sku);
+        }
       }
     }
   } catch (err) {
-    console.warn('DB delete error, falling back to memory store:', err);
+    console.error('Database hard delete error:', err);
   }
+
+  markProductAsDeleted(cleanId, targetSlug, targetSku);
 
   const initialLen = memoryProducts.length;
   memoryProducts = memoryProducts.filter(
-    (p) => p.id !== id && (p as any)._id?.toString() !== id && p.slug !== id && p.sku !== id
+    (p) =>
+      p.id !== cleanId &&
+      (p as any)._id?.toString() !== cleanId &&
+      p.slug !== cleanId &&
+      p.sku !== cleanId &&
+      !isProductDeleted(p.id, p.slug, p.sku) &&
+      !isProductDeleted((p as any)._id?.toString())
   );
-  const deletedFromMemory = memoryProducts.length < initialLen;
+  const memorySuccess = memoryProducts.length < initialLen;
 
-  return deletedFromDb || deletedFromMemory;
+  return dbSuccess || memorySuccess;
 }
 
 // --- CATEGORY SERVICES ---

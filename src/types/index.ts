@@ -51,6 +51,8 @@ export interface ProductPricing {
   currency: string;
 }
 
+export type ProductStatus = 'ACTIVE' | 'INACTIVE' | 'ARCHIVED';
+
 export interface Product {
   _id?: string;
   id?: string;
@@ -66,6 +68,8 @@ export interface Product {
   images: ProductImage[];
   attributes: ProductAttributes;
   flags: ProductFlags;
+  status?: ProductStatus;
+  archivedAt?: string;
   seo: ProductSEO;
   createdAt?: string;
   updatedAt?: string;

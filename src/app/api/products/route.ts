@@ -12,7 +12,9 @@ export async function GET(request: NextRequest) {
     const newArrivalsOnly = searchParams.get('new') === 'true';
     const search = searchParams.get('search') || undefined;
     const sortBy = searchParams.get('sortBy') || undefined;
-    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : 50;
+    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : 100;
+    const statusParam = (searchParams.get('status') as any) || undefined;
+    const isAdmin = searchParams.get('admin') === 'true';
 
     const data = await getProducts({
       categorySlug,
@@ -21,6 +23,7 @@ export async function GET(request: NextRequest) {
       search,
       sortBy,
       limit,
+      status: statusParam || (isAdmin ? 'ALL' : 'ACTIVE'),
     });
 
     return NextResponse.json({ success: true, data: data.products, total: data.total });

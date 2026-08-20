@@ -39,6 +39,8 @@ export interface IProductDocument extends Document {
     isBestSeller: boolean;
     isActive: boolean;
   };
+  status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED';
+  archivedAt?: Date;
   seo: {
     title: string;
     description: string;
@@ -91,6 +93,13 @@ const ProductSchema = new Schema<IProductDocument>(
       isBestSeller: { type: Boolean, default: false },
       isActive: { type: Boolean, default: true, index: true },
     },
+    status: {
+      type: String,
+      enum: ['ACTIVE', 'INACTIVE', 'ARCHIVED'],
+      default: 'ACTIVE',
+      index: true,
+    },
+    archivedAt: { type: Date },
     seo: {
       title: { type: String, default: '' },
       description: { type: String, default: '' },
@@ -100,8 +109,9 @@ const ProductSchema = new Schema<IProductDocument>(
 );
 
 // Compound indexes for optimal search and filtering performance
-ProductSchema.index({ categoryId: 1, 'flags.isActive': 1 });
-ProductSchema.index({ 'flags.isFeatured': 1, 'flags.isActive': 1 });
+ProductSchema.index({ status: 1, 'flags.isActive': 1 });
+ProductSchema.index({ categoryId: 1, status: 1 });
+ProductSchema.index({ 'flags.isFeatured': 1, status: 1 });
 ProductSchema.index({ createdAt: -1 });
 
 export default mongoose.models.Product || mongoose.model<IProductDocument>('Product', ProductSchema);

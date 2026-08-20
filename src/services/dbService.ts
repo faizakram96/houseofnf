@@ -82,11 +82,21 @@ export async function getProducts(options?: {
   sortBy?: string;
   limit?: number;
   page?: number;
+  status?: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | 'ALL';
+  includeInactive?: boolean;
 }): Promise<{ products: Product[]; total: number }> {
   try {
     const conn = await connectToDatabase();
     if (conn) {
-      const query: any = { 'flags.isActive': true };
+      const query: any = {};
+
+      if (options?.status && options.status !== 'ALL') {
+        query.status = options.status;
+      } else if (!options?.includeInactive && (!options?.status || options.status === 'ACTIVE')) {
+        query.status = 'ACTIVE';
+        query['flags.isActive'] = true;
+      }
+
       if (options?.categorySlug) {
         const category = await CategoryModel.findOne({ slug: options.categorySlug });
         if (category) {
@@ -108,10 +118,9 @@ export async function getProducts(options?: {
       if (options?.sortBy === 'price-high') sortOptions = { 'pricing.price': -1 };
       if (options?.sortBy === 'newest') sortOptions = { createdAt: -1 };
 
-      const total = await ProductModel.countDocuments(query);
       const docs = await ProductModel.find(query)
         .sort(sortOptions)
-        .limit(options?.limit || 50)
+        .limit(options?.limit || 100)
         .lean();
 
       const products = docs
@@ -128,6 +137,8 @@ export async function getProducts(options?: {
           images: doc.images,
           attributes: doc.attributes,
           flags: doc.flags,
+          status: (doc.status || (doc.flags?.isActive ? 'ACTIVE' : 'INACTIVE')) as any,
+          archivedAt: doc.archivedAt?.toISOString(),
           seo: doc.seo,
           createdAt: doc.createdAt?.toISOString(),
         }))
@@ -140,9 +151,17 @@ export async function getProducts(options?: {
   }
 
   // Fallback memory implementation
-  let filtered = [...memoryProducts].filter(
-    (p) => p.flags.isActive && !isProductDeleted(p.id, p.slug, p.sku) && !isProductDeleted((p as any)._id)
-  );
+  let filtered = [...memoryProducts].filter((p) => {
+    if (isProductDeleted(p.id, p.slug, p.sku) || isProductDeleted((p as any)._id)) return false;
+    const currentStatus = p.status || (p.flags.isActive ? 'ACTIVE' : 'INACTIVE');
+    if (options?.status && options.status !== 'ALL') {
+      return currentStatus === options.status;
+    }
+    if (!options?.includeInactive) {
+      return currentStatus === 'ACTIVE' && p.flags.isActive;
+    }
+    return true;
+  });
 
   if (options?.categorySlug) {
     const cat = memoryCategories.find((c) => c.slug === options.categorySlug);
@@ -368,7 +387,35 @@ export async function updateProduct(id: string, updates: Partial<Product>): Prom
   return null;
 }
 
-export async function deleteProduct(id: string): Promise<boolean> {
+export async function archiveProduct(id: string): Promise<Product | null> {
+  const updates = {
+    status: 'ARCHIVED' as const,
+    archivedAt: new Date().toISOString(),
+    flags: {
+      isFeatured: false,
+      isNewArrival: false,
+      isBestSeller: false,
+      isActive: false,
+    },
+  };
+  return updateProduct(id, updates);
+}
+
+export async function restoreProduct(id: string): Promise<Product | null> {
+  const updates = {
+    status: 'ACTIVE' as const,
+    archivedAt: undefined,
+    flags: {
+      isFeatured: false,
+      isNewArrival: true,
+      isBestSeller: false,
+      isActive: true,
+    },
+  };
+  return updateProduct(id, updates);
+}
+
+export async function permanentDeleteProduct(id: string): Promise<boolean> {
   if (!id) return false;
   const cleanId = id.trim();
   let dbSuccess = false;
@@ -421,6 +468,15 @@ export async function deleteProduct(id: string): Promise<boolean> {
   const memorySuccess = memoryProducts.length < initialLen;
 
   return dbSuccess || memorySuccess;
+}
+
+export async function deleteProduct(id: string, permanent: boolean = false): Promise<boolean> {
+  if (permanent) {
+    return permanentDeleteProduct(id);
+  } else {
+    const archived = await archiveProduct(id);
+    return !!archived;
+  }
 }
 
 // --- CATEGORY SERVICES ---

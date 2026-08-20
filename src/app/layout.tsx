@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Playfair_Display, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
-import { CartProvider } from '@/context/CartContext';
+import AppProviders from '@/components/providers/AppProviders';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CartDrawer from '@/components/cart/CartDrawer';
@@ -49,12 +49,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${playfair.variable} ${jakarta.variable}`}>
       <body className="font-sans antialiased text-stone-900 bg-[#FAF9F6]">
-        <CartProvider>
+        <AppProviders>
           <Navbar />
           <main>{children}</main>
           <CartDrawer />
           <Footer />
-        </CartProvider>
+        </AppProviders>
       </body>
     </html>
   );

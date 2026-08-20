@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IUserAddressDocument extends Document {
-  userId: mongoose.Types.ObjectId;
+  userId: any;
   fullName: string;
   phoneNumber: string;
   addressLine1: string;
@@ -18,7 +18,7 @@ export interface IUserAddressDocument extends Document {
 
 const UserAddressSchema = new Schema<IUserAddressDocument>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'UserAccount', required: true, index: true },
+    userId: { type: Schema.Types.Mixed, ref: 'UserAccount', required: true, index: true },
     fullName: { type: String, required: true, trim: true },
     phoneNumber: { type: String, required: true, trim: true },
     addressLine1: { type: String, required: true, trim: true },
@@ -32,6 +32,10 @@ const UserAddressSchema = new Schema<IUserAddressDocument>(
   },
   { timestamps: true }
 );
+
+if (process.env.NODE_ENV !== 'production' && mongoose.models.UserAddress) {
+  delete (mongoose.models as any).UserAddress;
+}
 
 export default mongoose.models.UserAddress ||
   mongoose.model<IUserAddressDocument>('UserAddress', UserAddressSchema);

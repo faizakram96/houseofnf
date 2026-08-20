@@ -1,469 +1,161 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { Lock, Mail, ArrowRight, ShieldAlert, Eye, EyeOff, CheckCircle2, KeyRound, ArrowLeft, RefreshCw, UserCheck } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Phone, ArrowRight, ShieldCheck, Sparkles, Globe } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
-export default function CustomerLoginPage() {
+export default function LoginPage() {
   const router = useRouter();
+  const { sendOtp, loginWithGoogle } = useAuth();
 
-  useEffect(() => {
-    router.replace('/');
-  }, [router]);
-
-  // Mode: 'login' | 'otp_step1' | 'otp_step2' | 'otp_step3'
-  const [mode, setMode] = useState<'login' | 'otp_step1' | 'otp_step2' | 'otp_step3'>('login');
-
-  // Form States
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
-
-  // OTP Reset States
-  const [otp, setOtp] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [demoOtpNotice, setDemoOtpNotice] = useState('');
-
-  // Status & Feedback States
-  const [loading, setLoading] = useState(false);
+  const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
-  // --- LOGIN SUBMIT ---
-  const handleLogin = async (e: React.FormEvent) => {
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!identifier.trim() || !password.trim()) {
-      setError('Please enter your Email or Mobile Number and Password.');
+    setError('');
+
+    const cleanDigits = phone.replace(/\D/g, '');
+    if (cleanDigits.length < 10) {
+      setError('Please enter a valid 10-digit mobile number.');
       return;
     }
 
     setLoading(true);
-    setError('');
-    setSuccessMsg('');
-
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          identifier: identifier.trim(),
-          password: password.trim(),
-          rememberMe,
-          role: 'customer',
-        }),
-      });
-
-      const json = await res.json();
-
-      if (json.success) {
-        setSuccessMsg('Signed in successfully! Directing to your account...');
-        localStorage.setItem('hnf_customer_user', JSON.stringify(json.user));
-
-        setTimeout(() => {
-          router.push('/account');
-        }, 600);
-      } else {
-        setError(json.error || 'Invalid email or password.');
-      }
+      await sendOtp(cleanDigits);
+      router.push('/login/verify-otp');
     } catch (err: any) {
-      setError('Connection error. Please try again.');
+      setError(err.message || 'Unable to send OTP. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  // --- STEP 1: SEND OTP ---
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!identifier.trim()) {
-      setError('Please enter your registered Email or Mobile Number.');
-      return;
-    }
-
-    setLoading(true);
+  const handleGoogleLogin = async () => {
     setError('');
-    setSuccessMsg('');
-
+    setGoogleLoading(true);
     try {
-      const res = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'send_otp', identifier: identifier.trim() }),
+      // Simulate Google OAuth popup response
+      const mockSub = `google_${Date.now()}_demo`;
+      const mockEmail = `customer_${Math.floor(1000 + Math.random() * 9000)}@gmail.com`;
+
+      await loginWithGoogle({
+        sub: mockSub,
+        email: mockEmail,
+        name: 'Curated Customer',
+        picture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200',
       });
-
-      const json = await res.json();
-      if (json.success) {
-        setSuccessMsg(json.message || 'OTP code dispatched!');
-        if (json.otp) {
-          setOtp(json.otp);
-          setDemoOtpNotice(`Verification OTP: ${json.otp}`);
-        }
-        setMode('otp_step2');
-      } else {
-        setError(json.error || 'Account not found.');
-      }
     } catch (err: any) {
-      setError('Failed to send verification code.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // --- STEP 2: VERIFY OTP ---
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!otp.trim()) {
-      setError('Please enter the 6-digit OTP code.');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setSuccessMsg('');
-
-    try {
-      const res = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify_otp', identifier: identifier.trim(), otp: otp.trim() }),
-      });
-
-      const json = await res.json();
-      if (json.success) {
-        setSuccessMsg(json.message);
-        setMode('otp_step3');
-      } else {
-        setError(json.error || 'Invalid OTP code.');
-      }
-    } catch (err: any) {
-      setError('Failed to verify code.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // --- STEP 3: RESET PASSWORD & LOGIN ---
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPassword.trim() || newPassword.length < 6) {
-      setError('New password must be at least 6 characters long.');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setSuccessMsg('');
-
-    try {
-      const res = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'reset_password',
-          identifier: identifier.trim(),
-          otp: otp.trim(),
-          newPassword: newPassword.trim(),
-        }),
-      });
-
-      const json = await res.json();
-      if (json.success) {
-        setSuccessMsg('Password updated! Signing you in...');
-        setPassword(newPassword.trim());
-
-        setTimeout(async () => {
-          const loginRes = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ identifier: identifier.trim(), password: newPassword.trim(), role: 'customer' }),
-          });
-          const loginJson = await loginRes.json();
-          if (loginJson.success) {
-            localStorage.setItem('hnf_customer_user', JSON.stringify(loginJson.user));
-            router.push('/account');
-          } else {
-            setMode('login');
-          }
-        }, 800);
-      } else {
-        setError(json.error || 'Password reset failed.');
-      }
-    } catch (err: any) {
-      setError('Failed to reset password.');
-    } finally {
-      setLoading(false);
+      setError(err.message || 'Google Login failed');
+      setGoogleLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-stone-900 flex items-center justify-center p-4 py-16">
-      <div className="relative w-full max-w-md bg-white border border-stone-200 p-8 sm:p-10 shadow-xl space-y-6">
-        {/* Brand Header */}
-        <div className="text-center pb-4 border-b border-stone-200">
-          <Link href="/" className="inline-block group">
-            <span className="font-serif text-2xl sm:text-3xl tracking-[0.18em] font-semibold text-stone-950 uppercase block group-hover:text-[#C5A059] transition-colors">
-              HOUSE OF NF
-            </span>
-            <span className="text-[9px] tracking-[0.35em] text-[#C5A059] uppercase block font-semibold mt-1">
-              PATRON ACCOUNT SIGN IN
-            </span>
-          </Link>
+    <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6]">
+      <div className="max-w-md w-full space-y-8 bg-white border border-stone-200/80 p-8 sm:p-10 shadow-xl rounded-none relative overflow-hidden">
+        {/* Brand Accent Top Border */}
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#C5A059]" />
+
+        {/* Header Title */}
+        <div className="text-center space-y-2">
+          <span className="text-[10px] uppercase tracking-[0.25em] text-[#C5A059] font-bold block">
+            HOUSE OF NF • ATELIER
+          </span>
+          <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-stone-900">Welcome Back</h1>
+          <p className="text-xs text-stone-500 font-light">Login or create your luxury shopping account</p>
         </div>
 
-        {/* Alerts */}
+        {/* Error Alert */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-800 text-xs p-3.5 flex items-start gap-2.5">
-            <ShieldAlert className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <span className="font-semibold block mb-0.5">Authentication Notice</span>
-              <p className="text-[11px] text-red-700 leading-relaxed">{error}</p>
-            </div>
+          <div className="bg-red-50 border border-red-200 text-red-700 text-xs p-3 text-center animate-in fade-in">
+            {error}
           </div>
         )}
 
-        {successMsg && (
-          <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs p-3.5 flex items-start gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <span className="font-semibold block mb-0.5">Success</span>
-              <p className="text-[11px] text-emerald-700 leading-relaxed">{successMsg}</p>
+        {/* Phone Login Form */}
+        <form onSubmit={handlePhoneSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[11px] font-semibold uppercase tracking-widest text-stone-700 block">
+              Mobile Number
+            </label>
+            <div className="flex items-center border border-stone-300 focus-within:border-[#C5A059] transition-colors bg-stone-50">
+              <div className="px-3.5 py-3 border-r border-stone-300 bg-stone-100/60 text-xs font-semibold text-stone-700 flex items-center gap-1">
+                <span>+91</span>
+              </div>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                placeholder="Enter 10-digit mobile number"
+                className="w-full text-xs p-3 bg-transparent text-stone-900 focus:outline-none placeholder:text-stone-400 font-mono tracking-wider"
+                maxLength={10}
+                required
+              />
             </div>
           </div>
-        )}
 
-        {/* --- MAIN CUSTOMER LOGIN FORM --- */}
-        {mode === 'login' && (
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block mb-1">
-                Email or Mobile Number
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
-                <input
-                  type="text"
-                  required
-                  value={identifier}
-                  onChange={(e) => {
-                    setIdentifier(e.target.value);
-                    if (error) setError('');
-                  }}
-                  placeholder="Enter email or mobile number"
-                  className="w-full bg-stone-50 border border-stone-300 text-xs text-stone-900 p-3.5 pl-9 focus:outline-none focus:border-[#C5A059] transition-colors"
-                />
-              </div>
-            </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#C5A059] hover:bg-[#B38E46] text-stone-950 font-bold text-xs uppercase tracking-widest py-3.5 px-4 transition-colors shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+          >
+            {loading ? (
+              <span>Sending OTP...</span>
+            ) : (
+              <>
+                <span>Continue</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+          </button>
+        </form>
 
-            <div>
-              <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block mb-1">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (error) setError('');
-                  }}
-                  placeholder="••••••••••••"
-                  className="w-full bg-stone-50 border border-stone-300 text-xs text-stone-900 p-3.5 pl-9 pr-10 focus:outline-none focus:border-[#C5A059] transition-colors"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
+        {/* Divider */}
+        <div className="relative flex py-2 items-center">
+          <div className="flex-grow border-t border-stone-200" />
+          <span className="flex-shrink mx-4 text-[10px] uppercase tracking-widest text-stone-400 font-semibold">
+            OR
+          </span>
+          <div className="flex-grow border-t border-stone-200" />
+        </div>
 
-            {/* Remember Me Checkbox & Forgot Password Link */}
-            <div className="flex items-center justify-between pt-1 text-xs">
-              <label className="flex items-center gap-2 cursor-pointer text-stone-600 hover:text-stone-900">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 accent-[#C5A059] cursor-pointer"
-                />
-                <span>Remember me</span>
-              </label>
+        {/* Google OAuth Option */}
+        <div>
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={googleLoading}
+            className="w-full bg-white hover:bg-stone-50 text-stone-800 border border-stone-300 text-xs font-semibold uppercase tracking-wider py-3 px-4 transition-colors flex items-center justify-center gap-3 shadow-sm cursor-pointer disabled:opacity-50"
+          >
+            <Globe className="w-4 h-4 text-emerald-600" />
+            <span>{googleLoading ? 'Connecting to Google...' : 'Continue with Google'}</span>
+          </button>
+        </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setError('');
-                  setSuccessMsg('');
-                  setMode('otp_step1');
-                }}
-                className="text-[#C5A059] hover:underline font-semibold"
-              >
-                Forgot Password?
-              </button>
-            </div>
+        {/* Terms & Guarantees */}
+        <div className="pt-4 border-t border-stone-200/60 text-center space-y-3">
+          <div className="flex items-center justify-center gap-2 text-[11px] text-stone-500 font-light">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <span>Secure 100% Encrypted Authentication</span>
+          </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#141312] hover:bg-[#C5A059] text-white hover:text-stone-950 font-bold text-xs uppercase tracking-[0.2em] py-4 transition-all duration-300 flex items-center justify-center gap-2 mt-6 shadow-md"
-            >
-              {loading ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" /> Signing In...
-                </>
-              ) : (
-                <>
-                  SIGN IN <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-
-            <div className="pt-4 border-t border-stone-200 text-center text-xs text-stone-500">
-              <span>New to House of NF? </span>
-              <Link href="/shop" className="text-[#C5A059] font-bold hover:underline">
-                Explore Atelier Collection
-              </Link>
-            </div>
-          </form>
-        )}
-
-        {/* --- FORGOT PASSWORD STEP 1 --- */}
-        {mode === 'otp_step1' && (
-          <form onSubmit={handleSendOtp} className="space-y-4">
-            <div className="text-center py-2">
-              <KeyRound className="w-8 h-8 text-[#C5A059] mx-auto mb-2" />
-              <h3 className="font-serif text-lg font-bold text-stone-900">Reset Password</h3>
-              <p className="text-xs text-stone-500 mt-1">Enter your registered Email or Mobile Number to receive an OTP.</p>
-            </div>
-
-            <div>
-              <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block mb-1">
-                Email or Mobile Number
-              </label>
-              <input
-                type="text"
-                required
-                value={identifier}
-                onChange={(e) => {
-                  setIdentifier(e.target.value);
-                  if (error) setError('');
-                }}
-                placeholder="Enter email or mobile number"
-                className="w-full bg-stone-50 border border-stone-300 text-xs text-stone-900 p-3.5 focus:outline-none focus:border-[#C5A059]"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#141312] hover:bg-[#C5A059] text-white hover:text-stone-950 font-bold text-xs uppercase tracking-[0.2em] py-3.5 flex items-center justify-center gap-2 transition-colors"
-            >
-              {loading ? 'Sending Code...' : 'Send OTP Code'}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setError('');
-                setSuccessMsg('');
-                setMode('login');
-              }}
-              className="w-full text-xs text-stone-500 hover:text-stone-900 pt-2 flex items-center justify-center gap-1.5"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" /> Return to Sign In
-            </button>
-          </form>
-        )}
-
-        {/* --- FORGOT PASSWORD STEP 2 --- */}
-        {mode === 'otp_step2' && (
-          <form onSubmit={handleVerifyOtp} className="space-y-4">
-            <div className="text-center py-2">
-              <KeyRound className="w-8 h-8 text-[#C5A059] mx-auto mb-2" />
-              <h3 className="font-serif text-lg font-bold text-stone-900">Verify Security Code</h3>
-              {demoOtpNotice && (
-                <div className="bg-amber-50 border border-amber-200 text-amber-900 text-xs p-2.5 mt-2 font-mono font-bold">
-                  {demoOtpNotice}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block mb-1">
-                Enter 6-Digit OTP Code
-              </label>
-              <input
-                type="text"
-                required
-                value={otp}
-                onChange={(e) => {
-                  setOtp(e.target.value);
-                  if (error) setError('');
-                }}
-                placeholder="e.g. 849201"
-                className="w-full bg-stone-50 border border-stone-300 text-xs text-[#C5A059] font-mono tracking-widest text-center py-3.5 focus:outline-none focus:border-[#C5A059]"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#141312] hover:bg-[#C5A059] text-white hover:text-stone-950 font-bold text-xs uppercase tracking-[0.2em] py-3.5 flex items-center justify-center gap-2 transition-colors"
-            >
-              {loading ? 'Verifying...' : 'Verify Code'}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setMode('otp_step1')}
-              className="w-full text-xs text-stone-500 hover:text-stone-900 pt-2 flex items-center justify-center gap-1.5"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" /> Back
-            </button>
-          </form>
-        )}
-
-        {/* --- FORGOT PASSWORD STEP 3 --- */}
-        {mode === 'otp_step3' && (
-          <form onSubmit={handleResetPassword} className="space-y-4">
-            <div className="text-center py-2">
-              <UserCheck className="w-8 h-8 text-[#C5A059] mx-auto mb-2" />
-              <h3 className="font-serif text-lg font-bold text-stone-900">Set New Password</h3>
-              <p className="text-xs text-stone-500 mt-1">Create a secure new password for your account.</p>
-            </div>
-
-            <div>
-              <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block mb-1">
-                New Password (min 6 characters)
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
-                <input
-                  type="password"
-                  required
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="New password"
-                  className="w-full bg-stone-50 border border-stone-300 text-xs text-stone-900 p-3.5 pl-9 focus:outline-none focus:border-[#C5A059]"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#141312] hover:bg-[#C5A059] text-white hover:text-stone-950 font-bold text-xs uppercase tracking-[0.2em] py-3.5 flex items-center justify-center gap-2 transition-colors"
-            >
-              {loading ? 'Resetting Password...' : 'Save New Password & Sign In'}
-            </button>
-          </form>
-        )}
+          <p className="text-[10px] text-stone-400 leading-relaxed">
+            By continuing, you agree to House of NF's{' '}
+            <Link href="/terms" className="underline hover:text-stone-700">
+              Terms of Use
+            </Link>{' '}
+            &{' '}
+            <Link href="/privacy" className="underline hover:text-stone-700">
+              Privacy Policy
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

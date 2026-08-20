@@ -274,7 +274,7 @@ export async function verifyPhoneOtp(rawPhone: string, inputOtp: string) {
   let memAccount: any = null;
 
   if (memIdentity) {
-    memAccount = memAccounts.find((a) => a.id === memIdentity.userId);
+    memAccount = memAccounts.find((a) => a.id === memIdentity!.userId);
   } else {
     let existingProf = memProfiles.find((p) => p.phone === phone);
     if (existingProf) {
@@ -451,7 +451,7 @@ export async function verifyOrLinkGoogleAuth(googlePayload: {
   let memAccount: any = null;
 
   if (memIdentity) {
-    memAccount = memAccounts.find((a) => a.id === memIdentity.userId);
+    memAccount = memAccounts.find((a) => a.id === memIdentity!.userId);
   } else {
     let existingProf = memProfiles.find((p) => p.email === normalizedEmail);
     let existingId = memIdentities.find((i) => i.identifierEmail === normalizedEmail);
@@ -625,5 +625,73 @@ export async function getFullCustomerProfile(userId: string) {
       isVerified: idDoc.isVerified,
     })),
     addresses: [],
+  };
+}
+
+/**
+ * 5. UPDATE PROFILE HYBRID ENGINE
+ */
+export async function updateUserProfileInDbOrMem(
+  userId: string,
+  updates: { firstName: string; lastName?: string; email?: string; phone?: string; gender?: string; dateOfBirth?: string }
+) {
+  const conn = await connectToDatabase();
+  const isDbConnected = conn && mongoose.connection.readyState === 1;
+
+  if (isDbConnected) {
+    try {
+      const updated = await UserProfileModel.findOneAndUpdate(
+        { userId },
+        {
+          $set: {
+            firstName: updates.firstName.trim(),
+            lastName: (updates.lastName || '').trim(),
+            email: updates.email ? updates.email.trim().toLowerCase() : undefined,
+            phone: updates.phone ? updates.phone.trim() : undefined,
+            gender: updates.gender || '',
+            dateOfBirth: updates.dateOfBirth ? new Date(updates.dateOfBirth) : undefined,
+          },
+        },
+        { new: true, upsert: true }
+      ).lean();
+
+      return {
+        firstName: updated.firstName,
+        lastName: updated.lastName,
+        email: updated.email,
+        phone: updated.phone,
+        avatarUrl: updated.avatarUrl,
+        gender: updated.gender,
+        dateOfBirth: updated.dateOfBirth?.toISOString(),
+      };
+    } catch (err: any) {
+      console.warn('DB Profile Update warning, using memory fallback:', err.message);
+    }
+  }
+
+  // Memory Fallback
+  let memProfile = memProfiles.find((p) => p.userId === userId);
+  if (memProfile) {
+    memProfile.firstName = updates.firstName.trim();
+    if (updates.lastName !== undefined) memProfile.lastName = updates.lastName.trim();
+    if (updates.email !== undefined) memProfile.email = updates.email.trim().toLowerCase();
+    if (updates.phone !== undefined) memProfile.phone = updates.phone.trim();
+  } else {
+    memProfile = {
+      userId,
+      firstName: updates.firstName.trim(),
+      lastName: (updates.lastName || '').trim(),
+      email: (updates.email || '').trim().toLowerCase(),
+      phone: updates.phone ? updates.phone.trim() : undefined,
+    };
+    memProfiles.push(memProfile);
+  }
+
+  return {
+    firstName: memProfile.firstName,
+    lastName: memProfile.lastName,
+    email: memProfile.email,
+    phone: memProfile.phone,
+    avatarUrl: memProfile.avatarUrl,
   };
 }

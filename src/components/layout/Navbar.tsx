@@ -3,16 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShoppingBag, Search, Menu, X, ArrowRight } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, User as UserIcon, ChevronDown, LogOut, Package, MapPin, UserCheck } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import SearchModal from '@/components/layout/SearchModal';
 
 export default function Navbar() {
   const pathname = usePathname();
   const { cartCount, setIsCartOpen } = useCart();
+  const { isAuthenticated, userProfile, logout } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -34,6 +37,8 @@ export default function Navbar() {
   const isAdminPage = pathname.startsWith('/admin');
 
   if (isAdminPage) return null;
+
+  const displayName = userProfile?.firstName || 'Customer';
 
   return (
     <>
@@ -126,6 +131,79 @@ export default function Navbar() {
               >
                 <Search className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.75]" />
               </button>
+
+              {/* Account Dropdown or Login Button */}
+              <div className="relative">
+                {isAuthenticated ? (
+                  <div>
+                    <button
+                      onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                      className="flex items-center gap-1 text-xs uppercase tracking-wider font-semibold text-stone-900 hover:text-[#C5A059] p-1.5 sm:p-2 transition-colors cursor-pointer"
+                    >
+                      <UserIcon className="w-4 h-4 text-[#C5A059]" />
+                      <span className="hidden sm:inline">Hi, {displayName}</span>
+                      <ChevronDown className="w-3 h-3 text-stone-400" />
+                    </button>
+
+                    {/* Luxury Dropdown Menu */}
+                    {isUserDropdownOpen && (
+                      <div
+                        className="absolute right-0 mt-2 w-56 bg-[#FAF9F6] border border-stone-200 shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95"
+                        onMouseLeave={() => setIsUserDropdownOpen(false)}
+                      >
+                        <div className="px-4 py-3 border-b border-stone-200 bg-stone-100/50">
+                          <p className="text-[10px] uppercase tracking-widest text-stone-400">Signed in as</p>
+                          <p className="text-xs font-semibold text-stone-900 truncate">{displayName}</p>
+                        </div>
+
+                        <Link
+                          href="/account"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-stone-700 hover:bg-stone-100 hover:text-[#C5A059] transition-colors"
+                        >
+                          <UserCheck className="w-4 h-4" /> My Account & Profile
+                        </Link>
+
+                        <Link
+                          href="/account?tab=orders"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-stone-700 hover:bg-stone-100 hover:text-[#C5A059] transition-colors"
+                        >
+                          <Package className="w-4 h-4" /> My Orders
+                        </Link>
+
+                        <Link
+                          href="/account?tab=addresses"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-stone-700 hover:bg-stone-100 hover:text-[#C5A059] transition-colors"
+                        >
+                          <MapPin className="w-4 h-4" /> Saved Addresses
+                        </Link>
+
+                        <div className="border-t border-stone-200 my-1" />
+
+                        <button
+                          onClick={() => {
+                            setIsUserDropdownOpen(false);
+                            logout();
+                          }}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 transition-colors text-left font-semibold cursor-pointer"
+                        >
+                          <LogOut className="w-4 h-4" /> Logout
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="flex items-center gap-1.5 text-xs uppercase tracking-widest font-semibold text-stone-800 hover:text-[#C5A059] p-1.5 sm:p-2 transition-colors"
+                  >
+                    <UserIcon className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.75]" />
+                    <span className="hidden sm:inline">Login / Sign Up</span>
+                  </Link>
+                )}
+              </div>
 
               {/* Cart Drawer Trigger */}
               <button

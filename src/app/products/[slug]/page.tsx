@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingBag, MessageCircle, ShieldCheck, Truck, RefreshCw, Ruler, Check, ChevronRight } from 'lucide-react';
+import { ShoppingBag, MessageCircle, ShieldCheck, Truck, RefreshCw, Ruler, Check, ChevronRight, ArrowRight } from 'lucide-react';
 import InstagramIcon from '@/components/ui/InstagramIcon';
 import { Product } from '@/types';
 import { useCart } from '@/context/CartContext';
@@ -205,11 +205,14 @@ export default function ProductDetailPage() {
               {/* Primary Call-to-Actions */}
               <div className="space-y-3 pt-6 border-t border-stone-200">
                 <button
-                  onClick={() => addToCart(product, selectedSize, quantity)}
-                  className="w-full bg-[#141312] hover:bg-[#C5A059] text-[#F3EBDD] hover:text-stone-950 font-semibold text-xs uppercase tracking-[0.2em] py-4 transition-all flex items-center justify-center gap-2 shadow-lg"
+                  onClick={() => {
+                    addToCart(product, selectedSize, quantity);
+                    router.push('/checkout');
+                  }}
+                  className="w-full bg-[#141312] hover:bg-[#C5A059] text-[#F3EBDD] hover:text-stone-950 font-bold text-xs uppercase tracking-[0.2em] py-4 transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer"
                 >
-                  <ShoppingBag className="w-4 h-4 stroke-[1.5]" />
-                  Add to Shopping Bag
+                  <ArrowRight className="w-4 h-4 stroke-[2]" />
+                  BUY NOW
                 </button>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

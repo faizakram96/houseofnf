@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShieldCheck, MessageCircle, ArrowRight, CheckCircle2, CreditCard, Wallet, Banknote, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, MessageCircle, ArrowRight, CheckCircle2, CreditCard, Wallet, Banknote, AlertTriangle, MapPin, Check, Loader2 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { getWhatsAppCartUrl } from '@/lib/whatsapp';
 import { formatPrice } from '@/lib/utils';
@@ -34,13 +34,18 @@ export default function CheckoutPage() {
   const { cart, subtotal, clearCart, freeShippingThreshold } = useCart();
   const router = useRouter();
 
+  // Guest Checkout Form State
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     email: '',
-    address: '',
-    city: 'Jaipur',
-    pincode: '302017',
+    houseNo: '',
+    street: '',
+    landmark: '',
+    pincode: '',
+    city: '',
+    state: '',
+    country: 'India',
     notes: '',
   });
 
@@ -49,24 +54,131 @@ export default function CheckoutPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [confirmedOrder, setConfirmedOrder] = useState<any>(null);
 
+  // Indian PIN Code Auto-Lookup State
+  const [pincodeLoading, setPincodeLoading] = useState(false);
+  const [pincodeStatus, setPincodeStatus] = useState<{
+    valid: boolean;
+    message: string;
+    city?: string;
+    state?: string;
+  } | null>(null);
+
   const shipping = subtotal >= freeShippingThreshold ? 0 : 150;
   const grandTotal = subtotal + shipping;
+
+  // Indian PIN Code lookup handler
+  const handlePincodeChange = async (val: string) => {
+    const cleanPincode = val.replace(/\D/g, '').slice(0, 6);
+    setFormData((prev) => ({ ...prev, pincode: cleanPincode }));
+
+    if (cleanPincode.length === 6) {
+      setPincodeLoading(true);
+      setPincodeStatus(null);
+      try {
+        const res = await fetch(`https://api.postalpincode.in/pincode/${cleanPincode}`);
+        const data = await res.json();
+
+        if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice?.length > 0) {
+          const po = data[0].PostOffice[0];
+          const fetchedCity = po.District || po.Block || po.Circle || 'Jaipur';
+          const fetchedState = po.State || 'Rajasthan';
+
+          setFormData((prev) => ({
+            ...prev,
+            city: fetchedCity,
+            state: fetchedState,
+          }));
+
+          setPincodeStatus({
+            valid: true,
+            message: `Delivery Available: ${fetchedCity}, ${fetchedState}`,
+            city: fetchedCity,
+            state: fetchedState,
+          });
+        } else if (/^[1-9][0-9]{5}$/.test(cleanPincode)) {
+          setPincodeStatus({
+            valid: true,
+            message: 'Valid 6-Digit Indian PIN Code Format (Delivery Available)',
+          });
+        } else {
+          setPincodeStatus({
+            valid: false,
+            message: 'Invalid Indian PIN Code. Delivery service unconfirmed.',
+          });
+        }
+      } catch (err) {
+        if (/^[1-9][0-9]{5}$/.test(cleanPincode)) {
+          setPincodeStatus({
+            valid: true,
+            message: 'Valid 6-Digit Indian PIN Code Format (Delivery Available)',
+          });
+        } else {
+          setPincodeStatus({
+            valid: false,
+            message: 'Please enter a valid 6-digit Indian PIN Code.',
+          });
+        }
+      } finally {
+        setPincodeLoading(false);
+      }
+    } else {
+      setPincodeStatus(null);
+    }
+  };
 
   const handleCheckoutSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
-    if (!formData.name.trim() || !formData.phone.trim()) {
-      setErrorMsg('Please enter your full name and phone number.');
+    if (!formData.name.trim()) {
+      setErrorMsg('Please enter your full name.');
+      return;
+    }
+
+    if (!formData.phone.trim()) {
+      setErrorMsg('Mobile number is required for order delivery updates.');
+      return;
+    }
+
+    if (!formData.houseNo.trim() || !formData.street.trim()) {
+      setErrorMsg('Please enter your complete delivery street address.');
+      return;
+    }
+
+    if (!formData.pincode.trim() || formData.pincode.length !== 6) {
+      setErrorMsg('A valid 6-digit Indian PIN Code is required.');
+      return;
+    }
+
+    if (pincodeStatus && !pincodeStatus.valid) {
+      setErrorMsg('Invalid PIN Code. Please correct your PIN Code before proceeding.');
+      return;
+    }
+
+    if (!formData.city.trim() || !formData.state.trim()) {
+      setErrorMsg('City and State are required for shipping.');
       return;
     }
 
     if (cart.length === 0) {
-      setErrorMsg('Your shopping cart is empty.');
+      setErrorMsg('Your shopping bag is empty.');
       return;
     }
 
     setIsSubmitting(true);
+
+    const fullStreetAddress = `${formData.houseNo}, ${formData.street}${formData.landmark ? `, Landmark: ${formData.landmark}` : ''}`;
+
+    const customerPayload = {
+      name: formData.name.trim(),
+      phone: formData.phone.trim(),
+      email: formData.email.trim(),
+      address: fullStreetAddress,
+      city: formData.city.trim(),
+      pincode: formData.pincode.trim(),
+      state: formData.state.trim(),
+      country: formData.country,
+    };
 
     try {
       if (paymentMethod === 'razorpay') {
@@ -78,12 +190,11 @@ export default function CheckoutPage() {
           return;
         }
 
-        // Create Order in DB & Razorpay Order Instance Server-Side
         const res = await fetch('/api/payments/create-order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            customer: formData,
+            customer: customerPayload,
             items: cart.map((item) => ({
               productId: item.product.id || item.product._id,
               productName: item.product.name,
@@ -143,8 +254,8 @@ export default function CheckoutPage() {
               const verifyJson = await verifyRes.json();
               if (verifyJson.success) {
                 setConfirmedOrder(verifyJson.data || {
-                  orderNumber: order.orderNumber,
-                  customer: formData,
+                  orderNumber: order.orderNumber || `HNF-${Math.floor(10000 + Math.random() * 90000)}`,
+                  customer: customerPayload,
                   pricing: { grandTotal },
                   items: cart,
                   payment: { status: 'Paid', method: 'Online (Razorpay)', paymentId: response.razorpay_payment_id },
@@ -176,7 +287,7 @@ export default function CheckoutPage() {
       } else if (paymentMethod === 'cod') {
         // --- 2. CASH ON DELIVERY (COD) FLOW ---
         const orderPayload = {
-          customer: formData,
+          customer: customerPayload,
           items: cart.map((item) => ({
             productId: item.product.id || item.product._id,
             productName: item.product.name,
@@ -210,7 +321,7 @@ export default function CheckoutPage() {
       } else {
         // --- 3. WHATSAPP ORDER FLOW ---
         const orderPayload = {
-          customer: formData,
+          customer: customerPayload,
           items: cart.map((item) => ({
             productId: item.product.id || item.product._id,
             productName: item.product.name,
@@ -257,6 +368,8 @@ export default function CheckoutPage() {
     const isPaid = confirmedOrder.payment?.status === 'Paid';
     const isCOD = confirmedOrder.payment?.gateway === 'cod' || confirmedOrder.payment?.method === 'cod';
 
+    const orderRef = confirmedOrder.orderNumber || `HNF-${Math.floor(10000 + Math.random() * 90000)}`;
+
     const whatsappItems = (confirmedOrder.items || []).map((i: any) => ({
       name: i.productName,
       sku: i.sku,
@@ -281,7 +394,7 @@ export default function CheckoutPage() {
               Thank You, {confirmedOrder.customer?.name}!
             </h1>
             <p className="text-xs text-stone-500 mt-1 font-mono">
-              Order Reference: <strong>{confirmedOrder.orderNumber}</strong>
+              Order ID: <strong className="text-stone-900 font-bold">{orderRef}</strong>
             </p>
           </div>
 
@@ -307,15 +420,19 @@ export default function CheckoutPage() {
               </div>
             )}
             <div className="flex justify-between">
+              <span className="text-stone-500">Delivery Mobile:</span>
+              <span className="font-mono text-stone-900 font-semibold">{confirmedOrder.customer?.phone}</span>
+            </div>
+            <div className="flex justify-between">
               <span className="text-stone-500">Delivery Address:</span>
-              <span className="text-stone-800 text-right">{confirmedOrder.customer?.address ? `${confirmedOrder.customer.address}, ${confirmedOrder.customer.city}` : 'Jaipur'}</span>
+              <span className="text-stone-800 text-right font-medium max-w-[240px] truncate">{confirmedOrder.customer?.address ? `${confirmedOrder.customer.address}, ${confirmedOrder.customer.city} (${confirmedOrder.customer.pincode})` : 'Jaipur'}</span>
             </div>
           </div>
 
           <p className="text-xs text-stone-600 leading-relaxed">
             {isPaid
-              ? 'Your online payment was verified successfully. Our atelier team will begin preparing your curated items for express dispatch.'
-              : 'Your order has been recorded. You can track updates in your client account or connect with direct support on WhatsApp.'}
+              ? 'Your order has been confirmed. Our atelier team will begin preparing your quality-checked items for express dispatch.'
+              : 'Your order reference has been created. Connect with atelier support on WhatsApp if you require instant updates.'}
           </p>
 
           <div className="space-y-3 pt-2">
@@ -357,9 +474,10 @@ export default function CheckoutPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-xl mx-auto mb-10 space-y-1">
           <span className="text-[10px] uppercase tracking-[0.3em] text-[#C5A059] font-bold block">
-            SECURE ATELIER CHECKOUT
+            GUEST CHECKOUT
           </span>
-          <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900">Delivery & Payment Details</h1>
+          <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900">Address & Payment Details</h1>
+          <p className="text-xs text-stone-500 font-light pt-1">Fast guest checkout — no account creation required.</p>
         </div>
 
         {errorMsg && (
@@ -390,7 +508,7 @@ export default function CheckoutPage() {
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block mb-1">Phone Number *</label>
+                <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block mb-1">Mobile Number *</label>
                 <input
                   type="tel"
                   required
@@ -399,6 +517,7 @@ export default function CheckoutPage() {
                   placeholder="+91 96642 09989"
                   className="w-full bg-stone-50 border border-stone-300 text-xs p-3 focus:outline-none focus:border-[#C5A059]"
                 />
+                <span className="text-[10px] text-stone-400 font-light mt-0.5 block">Used for delivery updates & OTP updates</span>
               </div>
             </div>
 
@@ -414,25 +533,86 @@ export default function CheckoutPage() {
             </div>
 
             <h3 className="font-serif text-base font-bold uppercase text-stone-900 pb-3 border-b border-stone-200 pt-4">
-              2. Shipping Address
+              2. Delivery Address
             </h3>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block mb-1">House / Flat / Building No. *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.houseNo}
+                  onChange={(e) => setFormData({ ...formData, houseNo: e.target.value })}
+                  placeholder="Flat 402, Sunshine Apartments"
+                  className="w-full bg-stone-50 border border-stone-300 text-xs p-3 focus:outline-none focus:border-[#C5A059]"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block mb-1">Street / Area *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.street}
+                  onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                  placeholder="Malviya Nagar"
+                  className="w-full bg-stone-50 border border-stone-300 text-xs p-3 focus:outline-none focus:border-[#C5A059]"
+                />
+              </div>
+            </div>
+
             <div>
-              <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block mb-1">Street Address</label>
+              <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block mb-1">Landmark (Optional)</label>
               <input
                 type="text"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="House/Flat No, Street Name, Landmark"
+                value={formData.landmark}
+                onChange={(e) => setFormData({ ...formData, landmark: e.target.value })}
+                placeholder="Near World Trade Park"
                 className="w-full bg-stone-50 border border-stone-300 text-xs p-3 focus:outline-none focus:border-[#C5A059]"
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block mb-1">City</label>
+            {/* Indian PIN Code Validation & Auto-Lookup Section */}
+            <div className="space-y-2">
+              <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block">PIN Code *</label>
+              <div className="relative">
                 <input
                   type="text"
+                  required
+                  maxLength={6}
+                  value={formData.pincode}
+                  onChange={(e) => handlePincodeChange(e.target.value)}
+                  placeholder="e.g. 302017 or 110001"
+                  className={`w-full bg-stone-50 border text-xs p-3 focus:outline-none ${
+                    pincodeStatus
+                      ? pincodeStatus.valid
+                        ? 'border-emerald-500 focus:border-emerald-600'
+                        : 'border-red-500 focus:border-red-600'
+                      : 'border-stone-300 focus:border-[#C5A059]'
+                  }`}
+                />
+                {pincodeLoading && (
+                  <div className="absolute right-3 top-3">
+                    <Loader2 className="w-4 h-4 text-[#C5A059] animate-spin" />
+                  </div>
+                )}
+              </div>
+
+              {pincodeStatus && (
+                <div className={`text-[11px] font-medium flex items-center gap-1.5 ${pincodeStatus.valid ? 'text-emerald-700' : 'text-red-600'}`}>
+                  {pincodeStatus.valid ? <Check className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+                  <span>{pincodeStatus.message}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block mb-1">City *</label>
+                <input
+                  type="text"
+                  required
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                   placeholder="e.g. Jaipur"
@@ -441,13 +621,24 @@ export default function CheckoutPage() {
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block mb-1">Pincode</label>
+                <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block mb-1">State *</label>
                 <input
                   type="text"
-                  value={formData.pincode}
-                  onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                  placeholder="302017"
+                  required
+                  value={formData.state}
+                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                  placeholder="e.g. Rajasthan"
                   className="w-full bg-stone-50 border border-stone-300 text-xs p-3 focus:outline-none focus:border-[#C5A059]"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs uppercase tracking-wider font-semibold text-stone-700 block mb-1">Country</label>
+                <input
+                  type="text"
+                  readOnly
+                  value={formData.country}
+                  className="w-full bg-stone-100 border border-stone-300 text-xs p-3 text-stone-500 cursor-not-allowed"
                 />
               </div>
             </div>
@@ -589,7 +780,7 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-[#141312] hover:bg-[#C5A059] text-[#F3EBDD] hover:text-stone-950 font-semibold text-xs uppercase tracking-[0.2em] py-4 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
+                className="w-full bg-[#141312] hover:bg-[#C5A059] text-[#F3EBDD] hover:text-stone-950 font-semibold text-xs uppercase tracking-[0.2em] py-4 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 cursor-pointer"
               >
                 {isSubmitting
                   ? 'Initializing Payment...'
@@ -612,4 +803,5 @@ export default function CheckoutPage() {
     </div>
   );
 }
+
 

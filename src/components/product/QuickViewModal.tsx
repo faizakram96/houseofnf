@@ -129,11 +129,11 @@ export default function QuickViewModal({
                     onClick={() => {
                       addToCart(product, selectedSize, 1);
                       onClose();
+                      window.location.href = '/checkout';
                     }}
-                    className="w-full bg-[#141312] hover:bg-[#C5A059] text-[#F3EBDD] text-xs uppercase tracking-widest py-3 px-4 font-medium flex items-center justify-center gap-2 transition-colors"
+                    className="w-full bg-[#141312] hover:bg-[#C5A059] text-[#F3EBDD] hover:text-stone-950 text-xs uppercase tracking-widest py-3 px-4 font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
                   >
-                    <ShoppingBag className="w-4 h-4" />
-                    Add to Bag
+                    BUY NOW
                   </button>
 
                   <a

@@ -193,13 +193,13 @@ export default function HomePage() {
 
           <div className="flex items-center gap-4 p-4">
             <div className="w-12 h-12 rounded-full bg-[#FAF9F6] border border-stone-200 flex items-center justify-center text-[#C5A059] flex-shrink-0">
-              <RefreshCw className="w-6 h-6 stroke-[1.5]" />
+              <ShieldCheck className="w-6 h-6 stroke-[1.5]" />
             </div>
             <div>
               <h3 className="font-serif text-sm font-semibold text-stone-900 uppercase tracking-wider">
-                Hassle-Free Exchanges
+                Quality Checked
               </h3>
-              <p className="text-xs text-stone-500 font-light mt-0.5">7-day size consultation & easy exchanges</p>
+              <p className="text-xs text-stone-500 font-light mt-0.5">Every piece hand-inspected in Jaipur before dispatch</p>
             </div>
           </div>
         </div>

@@ -108,13 +108,16 @@ export default function ProductCard({ product }: { product: Product }) {
               )}
             </div>
 
-            {/* Quick Add To Cart Button */}
+            {/* Buy Now Button */}
             <button
-              onClick={() => addToCart(product, selectedSize, 1)}
-              className="p-2 text-stone-700 hover:text-[#C5A059] hover:bg-stone-50 rounded-full transition-colors"
-              title="Add to Bag"
+              onClick={() => {
+                addToCart(product, selectedSize, 1);
+                window.location.href = '/checkout';
+              }}
+              className="px-3 py-1.5 bg-[#141312] hover:bg-[#C5A059] text-[#F3EBDD] hover:text-stone-950 font-bold text-[10px] uppercase tracking-widest transition-all rounded shadow-sm"
+              title="Buy Now"
             >
-              <ShoppingBag className="w-4 h-4 stroke-[1.5]" />
+              Buy Now
             </button>
           </div>
         </div>

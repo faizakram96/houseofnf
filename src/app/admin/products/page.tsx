@@ -16,6 +16,8 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
+  const [deleteConfirmProduct, setDeleteConfirmProduct] = useState<Product | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -36,16 +38,29 @@ export default function AdminProductsPage() {
     fetchProducts();
   }, []);
 
-  const handleDeleteProduct = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
+  const executeDelete = async (productToDelete: Product) => {
+    const targetId = productToDelete.id || (productToDelete as any)._id || productToDelete.slug;
+    if (!targetId) return;
+
+    setIsDeleting(true);
+    // Optimistic UI state removal for instant visual response
+    setProducts((prev) => prev.filter((item) => item.id !== targetId && (item as any)._id !== targetId && item.slug !== targetId));
+    setDeleteConfirmProduct(null);
+
     try {
-      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/products/${encodeURIComponent(targetId)}`, { method: 'DELETE' });
       const json = await res.json();
       if (json.success) {
         fetchProducts();
+      } else {
+        alert(`Delete failed: ${json.error || 'Unable to delete product'}`);
+        fetchProducts();
       }
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      alert(`Delete error: ${e.message || 'Server connection failed'}`);
+      fetchProducts();
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -132,7 +147,7 @@ export default function AdminProductsPage() {
                           <img src={mainImg} alt="" className="w-10 h-14 object-cover bg-stone-200 flex-shrink-0" />
                           <div>
                             <strong className={`font-serif text-sm font-semibold block ${textTitle}`}>{p.name}</strong>
-                            <span className={`text-[10px] ${textSub}`}>{p.attributes.fabric}</span>
+                            <span className={`text-[10px] ${textSub}`}>{p.attributes?.fabric || 'Luxury Weave'}</span>
                           </div>
                         </div>
                       </td>
@@ -178,11 +193,11 @@ export default function AdminProductsPage() {
                           </Link>
 
                           <button
-                            onClick={() => handleDeleteProduct(p.id || p._id || '', p.name)}
+                            onClick={() => setDeleteConfirmProduct(p)}
                             className={`p-1.5 border transition-colors ${
                               isWhite ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100' : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-red-300'
                             }`}
-                            title="Delete"
+                            title="Delete Product"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -196,6 +211,61 @@ export default function AdminProductsPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
+          <div className={`relative w-full max-w-md p-6 sm:p-8 border shadow-2xl space-y-6 ${cardBg}`}>
+            <div className="flex items-center gap-3 border-b border-stone-200 dark:border-stone-800 pb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-950 flex items-center justify-center text-red-600 dark:text-red-400">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className={`font-serif text-lg font-bold ${textTitle}`}>Delete Product</h3>
+                <p className={`text-xs ${textSub}`}>Atelier Admin Confirmation</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className={`text-xs ${textTitle}`}>
+                Are you sure you want to permanently remove <strong className="font-semibold text-red-600 dark:text-red-400">"{deleteConfirmProduct.name}"</strong> (SKU: {deleteConfirmProduct.sku})?
+              </p>
+              <p className="text-[11px] text-stone-500 font-light">
+                This product will be removed from your catalog, website storefront, and active collections immediately.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200 dark:border-stone-800">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmProduct(null)}
+                disabled={isDeleting}
+                className={`px-5 py-2.5 text-xs font-semibold uppercase tracking-wider border transition-colors cursor-pointer ${
+                  isWhite ? 'bg-stone-100 border-stone-300 text-stone-700 hover:bg-stone-200' : 'bg-stone-900 border-stone-800 text-stone-300 hover:text-white'
+                }`}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={() => executeDelete(deleteConfirmProduct)}
+                disabled={isDeleting}
+                className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white bg-red-600 hover:bg-red-700 shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <span>Deleting...</span>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Confirm Delete</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Customer View Live Preview Modal */}
       {previewProduct && (

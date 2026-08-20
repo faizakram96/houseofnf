@@ -325,19 +325,33 @@ export async function updateProduct(id: string, updates: Partial<Product>): Prom
 }
 
 export async function deleteProduct(id: string): Promise<boolean> {
+  let deletedFromDb = false;
   try {
     const conn = await connectToDatabase();
     if (conn) {
-      await ProductModel.findByIdAndDelete(id);
-      return true;
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+      let res: any = null;
+      if (isObjectId) {
+        res = await ProductModel.findByIdAndDelete(id);
+      }
+      if (!res) {
+        res = await ProductModel.findOneAndDelete({ $or: [{ slug: id }, { sku: id }, { id: id }] });
+      }
+      if (res) {
+        deletedFromDb = true;
+      }
     }
   } catch (err) {
-    console.warn('DB delete error, deleting from memory:', err);
+    console.warn('DB delete error, falling back to memory store:', err);
   }
 
   const initialLen = memoryProducts.length;
-  memoryProducts = memoryProducts.filter((p) => p.id !== id && p._id !== id);
-  return memoryProducts.length < initialLen;
+  memoryProducts = memoryProducts.filter(
+    (p) => p.id !== id && (p as any)._id?.toString() !== id && p.slug !== id && p.sku !== id
+  );
+  const deletedFromMemory = memoryProducts.length < initialLen;
+
+  return deletedFromDb || deletedFromMemory;
 }
 
 // --- CATEGORY SERVICES ---

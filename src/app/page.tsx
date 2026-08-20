@@ -75,7 +75,9 @@ export default function HomePage() {
               src={heroBgImage}
               alt="House of NF Atelier Hero"
               style={{
-                objectFit: heroConfig.transform?.objectFit ?? 'cover',
+                objectFit: (heroConfig.transform?.objectFit && heroConfig.transform.objectFit !== 'custom'
+                  ? heroConfig.transform.objectFit
+                  : 'cover') as React.CSSProperties['objectFit'],
                 objectPosition: heroConfig.transform
                   ? `${heroConfig.transform.positionX}% ${heroConfig.transform.positionY}%`
                   : '50% 50%',

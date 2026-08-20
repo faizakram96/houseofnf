@@ -470,7 +470,9 @@ export default function AdminHeroPage() {
               src={hero.backgroundImage || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=2000'}
               alt="Hero Preview"
               style={{
-                objectFit: hero.transform?.objectFit ?? 'cover',
+                objectFit: (hero.transform?.objectFit && hero.transform.objectFit !== 'custom'
+                  ? hero.transform.objectFit
+                  : 'cover') as React.CSSProperties['objectFit'],
                 objectPosition: hero.transform ? `${hero.transform.positionX}% ${hero.transform.positionY}%` : '50% 50%',
                 transform: hero.transform ? `scale(${hero.transform.zoom}) rotate(${hero.transform.rotation}deg)` : 'none',
               }}

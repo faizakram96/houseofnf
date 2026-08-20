@@ -1,15 +1,15 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Image as ImageIcon, Trash2, Check, Plus, Link as LinkIcon, Crop } from 'lucide-react';
+import { Upload, Trash2, Link as LinkIcon, Crop } from 'lucide-react';
 import { ProductImage, ImageTransformSettings } from '@/types';
 import ImageEditorModal from '@/components/admin/ImageEditorModal';
 
 interface FileUploadProps {
-  images: ProductImage[];
+  images?: ProductImage[];
   onChange: (images: ProductImage[]) => void;
   theme?: 'black' | 'white';
 }
 
-export default function FileUpload({ images, onChange, theme = 'black' }: FileUploadProps) {
+export default function FileUpload({ images = [], onChange, theme = 'black' }: FileUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlInput, setUrlInput] = useState('');
@@ -184,7 +184,9 @@ export default function FileUpload({ images, onChange, theme = 'black' }: FileUp
                 src={img.url}
                 alt={img.altText || ''}
                 style={{
-                  objectFit: img.transform?.objectFit ?? 'cover',
+                  objectFit: (img.transform?.objectFit && img.transform.objectFit !== 'custom'
+                    ? img.transform.objectFit
+                    : 'cover') as React.CSSProperties['objectFit'],
                   objectPosition: img.transform ? `${img.transform.positionX}% ${img.transform.positionY}%` : '50% 50%',
                   transform: img.transform ? `scale(${img.transform.zoom}) rotate(${img.transform.rotation}deg)` : 'none',
                 }}

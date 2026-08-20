@@ -207,7 +207,7 @@ export default function ProductDetailPage() {
                 <button
                   onClick={() => {
                     addToCart(product, selectedSize, quantity);
-                    router.push('/checkout');
+                    router.push('/cart');
                   }}
                   className="w-full bg-[#141312] hover:bg-[#C5A059] text-[#F3EBDD] hover:text-stone-950 font-bold text-xs uppercase tracking-[0.2em] py-4 transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer"
                 >

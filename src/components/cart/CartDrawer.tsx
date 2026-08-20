@@ -188,23 +188,21 @@ export default function CartDrawer() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-2 pt-2">
-                <a
-                  href={whatsappCheckoutUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full bg-[#128C7E] hover:bg-[#075E54] text-white text-xs uppercase tracking-widest py-3.5 px-4 font-semibold flex items-center justify-center gap-2 transition-colors shadow-md"
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                <Link
+                  href="/cart"
+                  onClick={() => setIsCartOpen(false)}
+                  className="w-full bg-stone-100 hover:bg-stone-200 text-stone-900 border border-stone-300 text-[11px] uppercase tracking-wider py-3 px-3 font-semibold flex items-center justify-center gap-1 transition-colors text-center"
                 >
-                  Order Direct on WhatsApp
-                  <ArrowRight className="w-4 h-4" />
-                </a>
+                  View Bag
+                </Link>
 
                 <Link
                   href="/checkout"
                   onClick={() => setIsCartOpen(false)}
-                  className="w-full bg-[#141312] hover:bg-[#C5A059] text-[#F3EBDD] hover:text-white text-xs uppercase tracking-widest py-3 px-4 font-medium flex items-center justify-center gap-2 transition-colors text-center"
+                  className="w-full bg-[#141312] hover:bg-[#C5A059] text-[#F3EBDD] hover:text-stone-950 text-[11px] uppercase tracking-wider py-3 px-3 font-bold flex items-center justify-center gap-1 transition-colors text-center shadow-md"
                 >
-                  Proceed to Checkout
+                  Checkout →
                 </Link>
               </div>
             </div>

@@ -32,7 +32,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
   const handleBuyNow = (size: 'S' | 'M' | 'L' | 'XL' | 'XXL') => {
     addToCart(product, size, 1);
-    window.location.href = '/checkout';
+    window.location.href = '/cart';
   };
 
   return (

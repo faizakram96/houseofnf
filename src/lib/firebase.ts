@@ -73,8 +73,8 @@ export async function sendFirebasePhoneOtp(
     console.log(`[FIREBASE SMS SENT] Google dispatched real SMS OTP to ${formattedPhone}`);
     return confirmationResult;
   } catch (err: any) {
-    console.error('[FIREBASE SMS ERROR]', err.message);
-    throw err;
+    console.warn('[FIREBASE SMS WARNING] Could not send via Firebase (Phone Auth provider may be disabled in Firebase Console):', err.message);
+    return null;
   }
 }
 

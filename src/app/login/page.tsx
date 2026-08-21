@@ -10,6 +10,10 @@ export default function LoginPage() {
   const router = useRouter();
   const { sendOtp, loginWithGoogle } = useAuth();
 
+  React.useEffect(() => {
+    router.replace('/');
+  }, [router]);
+
   const [phone, setPhone] = useState('');
   const [agreed, setAgreed] = useState(true);
   const [error, setError] = useState('');

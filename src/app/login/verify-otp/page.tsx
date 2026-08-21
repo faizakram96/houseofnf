@@ -21,14 +21,8 @@ export default function VerifyOtpPage() {
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
   useEffect(() => {
-    if (!pendingPhone) {
-      router.push('/login');
-    } else {
-      setTimeout(() => {
-        inputRefs.current[0]?.focus();
-      }, 100);
-    }
-  }, [pendingPhone, router]);
+    router.replace('/');
+  }, [router]);
 
   useEffect(() => {
     let interval: any = null;
@@ -177,23 +171,6 @@ export default function VerifyOtpPage() {
             Sent to {pendingPhone ? pendingPhone.replace('+91', '') : '9039549989'}
           </p>
         </div>
-
-        {/* Dev OTP Helper Badge */}
-        {pendingDevOtp && (
-          <div className="bg-amber-50 border border-amber-300 text-amber-900 text-xs p-3 text-center rounded-none font-mono space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-[10px] uppercase tracking-wider text-amber-700">Demo OTP Code</span>
-              <strong className="text-sm font-bold text-amber-950">{pendingDevOtp}</strong>
-            </div>
-            <button
-              type="button"
-              onClick={() => handleAutoFillOtp(pendingDevOtp)}
-              className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs uppercase tracking-wider py-2 px-3 transition-colors shadow-sm cursor-pointer"
-            >
-              ⚡ Auto-fill & Verify OTP ({pendingDevOtp})
-            </button>
-          </div>
-        )}
 
         {/* Error Alert */}
         {error && (

@@ -23,6 +23,10 @@ export default function VerifyOtpPage() {
   useEffect(() => {
     if (!pendingPhone) {
       router.push('/login');
+    } else {
+      setTimeout(() => {
+        inputRefs.current[0]?.focus();
+      }, 100);
     }
   }, [pendingPhone, router]);
 
@@ -37,6 +41,30 @@ export default function VerifyOtpPage() {
     }
     return () => clearInterval(interval);
   }, [timer]);
+
+  const handleAutoFillOtp = (code: string) => {
+    if (!code || code.length < 6) return;
+    const digits = code.split('').slice(0, 6);
+    setOtpDigits(digits);
+    submitOtp(code);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pastedData.length > 0) {
+      const newDigits = Array(6).fill('');
+      for (let i = 0; i < pastedData.length; i++) {
+        newDigits[i] = pastedData[i];
+      }
+      setOtpDigits(newDigits);
+      if (pastedData.length === 6) {
+        submitOtp(pastedData);
+      } else {
+        inputRefs.current[pastedData.length]?.focus();
+      }
+    }
+  };
 
   const formatTimer = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -152,11 +180,18 @@ export default function VerifyOtpPage() {
 
         {/* Dev OTP Helper Badge */}
         {pendingDevOtp && (
-          <div className="bg-amber-50 border border-amber-300 text-amber-900 text-xs p-3 text-center rounded-none font-mono">
-            <span className="font-semibold block text-[10px] uppercase tracking-wider text-amber-700">
-              Demo Mode Helper
-            </span>
-            Use Test OTP: <strong>{pendingDevOtp}</strong>
+          <div className="bg-amber-50 border border-amber-300 text-amber-900 text-xs p-3 text-center rounded-none font-mono space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-[10px] uppercase tracking-wider text-amber-700">Demo OTP Code</span>
+              <strong className="text-sm font-bold text-amber-950">{pendingDevOtp}</strong>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleAutoFillOtp(pendingDevOtp)}
+              className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs uppercase tracking-wider py-2 px-3 transition-colors shadow-sm cursor-pointer"
+            >
+              ⚡ Auto-fill & Verify OTP ({pendingDevOtp})
+            </button>
           </div>
         )}
 
@@ -182,6 +217,7 @@ export default function VerifyOtpPage() {
                 value={digit}
                 onChange={(e) => handleChange(idx, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(idx, e)}
+                onPaste={handlePaste}
                 className="w-10 h-12 sm:w-11 sm:h-13 text-center font-bold text-xl text-stone-900 bg-white border border-stone-300 focus:border-[#ff3f6c] focus:outline-none transition-colors"
                 required
               />

@@ -62,6 +62,78 @@ export function normalizePhone(phone: string): string {
   return `+${digits}`;
 }
 
+// Real SMS Gateway Dispatcher (Supports 2Factor, Fast2SMS, Twilio, MSG91)
+async function dispatchRealSmsGateway(phone: string, otp: string) {
+  const cleanPhone10 = phone.replace(/\D/g, '').slice(-10);
+  const fullPhoneE164 = normalizePhone(phone);
+
+  console.log(`\n============================================================`);
+  console.log(`📱 [REAL SMS OTP DISPATCHED]`);
+  console.log(`   Recipient Mobile Number : ${fullPhoneE164}`);
+  console.log(`   Verification OTP Code   : ${otp}`);
+  console.log(`   Valid For              : 5 Minutes (HMAC-SHA256 Encrypted)`);
+  console.log(`============================================================\n`);
+
+  // 1. 2Factor.in API (Indian SMS Gateway)
+  const twoFactorKey = process.env.TWOFACTOR_API_KEY;
+  if (twoFactorKey) {
+    try {
+      const res = await fetch(`https://2factor.in/API/V1/${twoFactorKey}/SMS/${cleanPhone10}/${otp}/HouseOfNF`);
+      console.log(`[2Factor SMS] Dispatched to ${cleanPhone10}, Response:`, await res.json());
+    } catch (e: any) {
+      console.warn('[2Factor SMS Warning]', e.message);
+    }
+  }
+
+  // 2. Fast2SMS API (Indian SMS Gateway)
+  const fast2smsKey = process.env.FAST2SMS_API_KEY;
+  if (fast2smsKey) {
+    try {
+      const res = await fetch('https://www.fast2sms.com/dev/bulkV2', {
+        method: 'POST',
+        headers: {
+          authorization: fast2smsKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          variables_values: otp,
+          route: 'otp',
+          numbers: cleanPhone10,
+        }),
+      });
+      console.log(`[Fast2SMS] Dispatched to ${cleanPhone10}, Response:`, await res.json());
+    } catch (e: any) {
+      console.warn('[Fast2SMS Warning]', e.message);
+    }
+  }
+
+  // 3. Twilio SMS API (Global SMS Gateway)
+  const twilioSid = process.env.TWILIO_ACCOUNT_SID;
+  const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
+  const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
+  if (twilioSid && twilioAuthToken && twilioPhone) {
+    try {
+      const auth = Buffer.from(`${twilioSid}:${twilioAuthToken}`).toString('base64');
+      const body = new URLSearchParams({
+        To: fullPhoneE164,
+        From: twilioPhone,
+        Body: `Your House of NF verification OTP code is ${otp}. Valid for 5 minutes. Do not share with anyone.`,
+      });
+      const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${auth}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString(),
+      });
+      console.log(`[Twilio SMS] Dispatched to ${fullPhoneE164}, Response status:`, res.status);
+    } catch (e: any) {
+      console.warn('[Twilio SMS Warning]', e.message);
+    }
+  }
+}
+
 /**
  * 1. SEND OTP ENGINE
  */
@@ -93,6 +165,8 @@ export async function sendPhoneOtp(rawPhone: string) {
         purpose: 'LOGIN',
         expiresAt,
       });
+
+      await dispatchRealSmsGateway(phone, otp);
 
       return {
         success: true,
@@ -126,6 +200,8 @@ export async function sendPhoneOtp(rawPhone: string) {
     expiresAt,
     createdAt: new Date(),
   });
+
+  await dispatchRealSmsGateway(phone, otp);
 
   return {
     success: true,

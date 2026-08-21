@@ -30,18 +30,26 @@ export function initRecaptcha(containerId: string = 'recaptcha-container') {
   if (typeof window === 'undefined') return null;
 
   try {
-    // Clear previous instance if exists
-    if ((window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier.clear();
+    // Ensure container element exists in DOM
+    let element = document.getElementById(containerId);
+    if (!element) {
+      element = document.createElement('div');
+      element.id = containerId;
+      document.body.appendChild(element);
     }
+
+    if ((window as any).recaptchaVerifier) {
+      try {
+        (window as any).recaptchaVerifier.clear();
+      } catch (e) {}
+    }
+
+    auth.useDeviceLanguage();
 
     const recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
       size: 'invisible',
       callback: () => {
         console.log('[FIREBASE] Recaptcha verified automatically');
-      },
-      'expired-callback': () => {
-        console.warn('[FIREBASE] Recaptcha expired');
       },
     });
 
@@ -58,7 +66,7 @@ export function initRecaptcha(containerId: string = 'recaptcha-container') {
  */
 export async function sendFirebasePhoneOtp(
   rawPhone: string,
-  verifier: any
+  verifier?: any
 ): Promise<ConfirmationResult | null> {
   if (!isFirebaseConfigured) {
     console.log('[FIREBASE] Firebase API Key not present in .env.local, using backend OTP engine.');
@@ -69,11 +77,14 @@ export async function sendFirebasePhoneOtp(
   const formattedPhone = `+91${cleanPhone}`;
 
   try {
-    const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, verifier);
+    const activeVerifier = verifier || initRecaptcha('recaptcha-container');
+    if (!activeVerifier) return null;
+
+    const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, activeVerifier);
     console.log(`[FIREBASE SMS SENT] Google dispatched real SMS OTP to ${formattedPhone}`);
     return confirmationResult;
   } catch (err: any) {
-    console.warn('[FIREBASE SMS WARNING] Could not send via Firebase (Phone Auth provider may be disabled in Firebase Console):', err.message);
+    console.warn('[FIREBASE SMS WARNING] Could not send via Firebase (Phone Auth may require Authorized Domain or Test Phone in Firebase Console):', err.message);
     return null;
   }
 }

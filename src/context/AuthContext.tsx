@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { UserAccount, UserProfileType, AuthIdentity } from '@/types';
+import { initRecaptcha, sendFirebasePhoneOtp, signInWithGoogleRealPopup, isFirebaseConfigured } from '@/lib/firebase';
+import { ConfirmationResult } from 'firebase/auth';
 
 interface AuthContextType {
   userAccount: UserAccount | null;
@@ -12,7 +14,7 @@ interface AuthContextType {
   isLoading: boolean;
   sendOtp: (phone: string) => Promise<{ success: boolean; message: string; devOtp?: string }>;
   verifyOtp: (phone: string, otp: string) => Promise<boolean>;
-  loginWithGoogle: (payload: { sub: string; email: string; name?: string; picture?: string }) => Promise<boolean>;
+  loginWithGoogle: (payload?: { sub: string; email: string; name?: string; picture?: string }) => Promise<boolean>;
   updateProfile: (updates: { firstName: string; lastName?: string; email?: string }) => Promise<boolean>;
   logout: () => Promise<void>;
   pendingPhone: string;
@@ -36,6 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Temporary Flow State
   const [pendingPhone, setPendingPhone] = useState('');
   const [pendingDevOtp, setPendingDevOtp] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   const fetchSession = async () => {
     setIsLoading(true);
@@ -63,6 +66,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const sendOtp = async (phone: string) => {
+    setPendingPhone(phone);
+
+    // 1. Try Firebase Real SMS (10,000 Free SMS/Month) if configured
+    if (isFirebaseConfigured) {
+      try {
+        const verifier = initRecaptcha('recaptcha-container');
+        const confirmResult = await sendFirebasePhoneOtp(phone, verifier);
+        if (confirmResult) {
+          setConfirmationResult(confirmResult);
+          return {
+            success: true,
+            message: `Real SMS OTP dispatched by Google Firebase to +91${phone.replace(/\D/g, '').slice(-10)}`,
+          };
+        }
+      } catch (firebaseErr: any) {
+        console.warn('Firebase SMS Error, falling back to backend OTP engine:', firebaseErr.message);
+      }
+    }
+
+    // 2. Backend OTP Engine Dispatch
     const res = await fetch('/api/auth/phone/otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -71,12 +94,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const json = await res.json();
     if (!json.success) throw new Error(json.error || 'Failed to send OTP');
 
-    setPendingPhone(phone);
     if (json.devOtp) setPendingDevOtp(json.devOtp);
     return json;
   };
 
   const verifyOtp = async (phone: string, otp: string): Promise<boolean> => {
+    // 1. Verify via Firebase Confirmation Result if active
+    if (confirmationResult) {
+      try {
+        const userCredential = await confirmationResult.confirm(otp);
+        const fbUser = userCredential.user;
+
+        // Sync verified Firebase user with backend MongoDB
+        const res = await fetch('/api/auth/phone/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, otp: 'FIREBASE_VERIFIED', firebaseUid: fbUser.uid }),
+        });
+        const json = await res.json();
+        if (json.success) {
+          setUserAccount(json.userAccount);
+          setUserProfile(json.userProfile);
+          setLinkedIdentities(json.linkedIdentities || []);
+
+          if (!json.userProfile || !json.userProfile.firstName) {
+            router.push('/login/complete-profile');
+          } else {
+            router.push(redirectParam || '/');
+          }
+          return true;
+        }
+      } catch (fbVerifyErr: any) {
+        console.warn('Firebase confirm code error, trying backend OTP verify:', fbVerifyErr.message);
+      }
+    }
+
+    // 2. Standard Backend Verify Engine
     const res = await fetch('/api/auth/phone/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -89,22 +142,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUserProfile(json.userProfile);
     setLinkedIdentities(json.linkedIdentities || []);
 
-    // Check if new user profile needs completion
     if (!json.userProfile || !json.userProfile.firstName) {
       router.push('/login/complete-profile');
     } else {
-      const destination = redirectParam || '/';
-      router.push(destination);
+      router.push(redirectParam || '/');
     }
     return true;
   };
 
-  const loginWithGoogle = async (payload: { sub: string; email: string; name?: string; picture?: string }): Promise<boolean> => {
+  const loginWithGoogle = async (payload?: { sub: string; email: string; name?: string; picture?: string }): Promise<boolean> => {
+    let authPayload = payload;
+
+    // Try real Google OAuth popup if Firebase is configured
+    if (!authPayload && isFirebaseConfigured) {
+      const googleRealUser = await signInWithGoogleRealPopup();
+      if (googleRealUser) {
+        authPayload = googleRealUser;
+      }
+    }
+
+    if (!authPayload) {
+      authPayload = {
+        sub: `google_${Date.now()}_demo`,
+        email: `customer_${Math.floor(1000 + Math.random() * 9000)}@gmail.com`,
+        name: 'Curated Customer',
+        picture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200',
+      };
+    }
+
     const res = await fetch('/api/auth/google', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        ...payload,
+        ...authPayload,
         emailVerified: true,
       }),
     });
@@ -115,8 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUserProfile(json.userProfile);
     setLinkedIdentities(json.linkedIdentities || []);
 
-    const destination = redirectParam || '/';
-    router.push(destination);
+    router.push(redirectParam || '/');
     return true;
   };
 

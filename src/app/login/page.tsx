@@ -63,6 +63,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#FAF9F6]">
+      {/* Invisible Recaptcha Container for Firebase 10,000 Free SMS */}
+      <div id="recaptcha-container" />
+
       <div className="max-w-md w-full space-y-6 bg-white border border-stone-200/80 p-8 sm:p-10 shadow-xl rounded-none relative">
         {/* Title */}
         <div className="text-left space-y-1">
